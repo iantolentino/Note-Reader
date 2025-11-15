@@ -1,66 +1,96 @@
 /**
- * File upload functionality for markdown files
+ * Enhanced file upload with GitHub integration
  */
 
 let selectedFile = null;
 
 // Initialize upload page
 function initUpload() {
+    console.log('Initializing upload page...');
+    
     if (!checkAuth()) {
+        console.log('Not authenticated, redirecting to login');
         window.location.href = 'index.html';
         return;
     }
     
+    console.log('User is authenticated');
     setupCategorySelector();
     setupFileUpload();
+    checkGitHubStatus();
 }
 
-// Check authentication
-function checkAuth() {
-    const session = sessionStorage.getItem('notesAppSession');
-    if (!session) return false;
-    
-    try {
-        const sessionData = JSON.parse(session);
-        return sessionData.loggedIn && (Date.now() - sessionData.timestamp < 2 * 60 * 60 * 1000);
-    } catch (e) {
-        return false;
-    }
-}
-
-// Setup category selector
 function setupCategorySelector() {
     const categorySelect = document.getElementById('noteCategory');
-    const customCategory = document.getElementById('customCategory');
+    const customCategoryDiv = document.getElementById('customCategory');
+    
+    if (!categorySelect || !customCategoryDiv) {
+        console.error('Category elements not found');
+        return;
+    }
     
     categorySelect.addEventListener('change', function() {
         if (this.value === 'other') {
-            customCategory.style.display = 'block';
+            customCategoryDiv.style.display = 'block';
+            // Add placeholder and focus
+            const customInput = document.getElementById('customCategoryInput');
+            if (customInput) {
+                customInput.placeholder = 'Enter category name...';
+                customInput.focus();
+            }
         } else {
-            customCategory.style.display = 'none';
+            customCategoryDiv.style.display = 'none';
         }
     });
+    
+    console.log('Category selector setup complete');
 }
 
-// Setup file upload with drag and drop
 function setupFileUpload() {
-    const fileUploadArea = document.getElementById('fileUploadArea');
     const fileInput = document.getElementById('fileInput');
+    const uploadArea = document.getElementById('fileUploadArea');
     
-    // Drag and drop functionality
-    fileUploadArea.addEventListener('dragover', function(e) {
-        e.preventDefault();
-        this.classList.add('dragover');
+    // Remove all existing event listeners first
+    uploadArea.replaceWith(uploadArea.cloneNode(true));
+    const newUploadArea = document.getElementById('fileUploadArea');
+    const newFileInput = document.getElementById('fileInput');
+    
+    // Single click handler - only trigger on actual area click
+    newUploadArea.addEventListener('click', (e) => {
+        // Only trigger if clicking the upload area itself, not children
+        if (e.target === newUploadArea || 
+            e.target.classList.contains('upload-icon') || 
+            e.target.tagName === 'H5' || 
+            e.target.tagName === 'P') {
+            e.preventDefault();
+            e.stopPropagation();
+            newFileInput.click();
+        }
     });
     
-    fileUploadArea.addEventListener('dragleave', function(e) {
+    // File input change handler
+    newFileInput.addEventListener('change', handleFileSelect);
+    
+    // Drag and drop
+    newUploadArea.addEventListener('dragover', (e) => {
         e.preventDefault();
-        this.classList.remove('dragover');
+        newUploadArea.style.borderColor = '#ffffff';
+        newUploadArea.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
     });
     
-    fileUploadArea.addEventListener('drop', function(e) {
+    newUploadArea.addEventListener('dragleave', (e) => {
         e.preventDefault();
-        this.classList.remove('dragover');
+        if (!newUploadArea.contains(e.relatedTarget)) {
+            newUploadArea.style.borderColor = '#38444d';
+            newUploadArea.style.backgroundColor = 'transparent';
+        }
+    });
+    
+    newUploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        newUploadArea.style.borderColor = '#38444d';
+        newUploadArea.style.backgroundColor = 'transparent';
         
         const files = e.dataTransfer.files;
         if (files.length > 0) {
@@ -69,22 +99,29 @@ function setupFileUpload() {
     });
 }
 
-// Handle file selection
 function handleFileSelect(event) {
     const file = event.target.files[0];
     if (!file) return;
     
     // Validate file type
     if (!file.name.endsWith('.md')) {
-        alert('Please select a .md file');
+        showAlert('Please select a Markdown (.md) file', 'error');
+        event.target.value = ''; // Reset input
         return;
     }
     
     selectedFile = file;
     displayFileInfo(file);
+    
+    // Auto-focus on category selection after file is chosen
+    document.getElementById('noteCategory').focus();
 }
 
-// Display file information
+function resetFileInput() {
+    const fileInput = document.getElementById('fileInput');
+    fileInput.value = '';
+}
+
 function displayFileInfo(file) {
     const fileInfo = document.getElementById('fileInfo');
     const fileName = document.getElementById('fileName');
@@ -95,7 +132,6 @@ function displayFileInfo(file) {
     fileInfo.style.display = 'block';
 }
 
-// Format file size
 function formatFileSize(bytes) {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
@@ -104,101 +140,134 @@ function formatFileSize(bytes) {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
-// Upload file
+function readFileContent(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target.result);
+        reader.onerror = (e) => reject(new Error('Failed to read file'));
+        reader.readAsText(file);
+    });
+}
+
+// Enhanced upload function
 async function uploadFile() {
     const categorySelect = document.getElementById('noteCategory');
-    const customCategory = document.getElementById('customCategoryInput');
+    const customCategoryInput = document.getElementById('customCategoryInput');
     
-    // Validation
     if (!selectedFile) {
-        alert('Please select a markdown file to upload');
+        showAlert('Please select a markdown file to upload', 'warning');
         return;
     }
     
-    const category = categorySelect.value === 'other' 
-        ? customCategory?.value.trim().toLowerCase() 
-        : categorySelect.value;
+    let category = categorySelect.value;
+    if (category === 'other') {
+        category = customCategoryInput?.value.trim().toLowerCase();
+        if (!category) {
+            showAlert('Please specify a custom category', 'warning');
+            return;
+        }
+    }
     
     if (!category) {
-        alert('Please select or specify a category');
+        showAlert('Please select or specify a category', 'warning');
         return;
     }
-    
+
     try {
-        // Show loading state
         const uploadBtn = document.getElementById('uploadBtn');
         const originalText = uploadBtn.innerHTML;
         uploadBtn.innerHTML = '<span class="loading-spinner"></span> Uploading...';
         uploadBtn.disabled = true;
         
-        // Read file content
         const content = await readFileContent(selectedFile);
         
-        // Prepare file data
-        const fileData = {
-            filename: selectedFile.name,
-            category: category,
+        console.log('Uploading file:', selectedFile.name, 'Category:', category);
+        
+        // Upload to server
+        const uploadData = {
+            fileName: selectedFile.name.endsWith('.md') ? selectedFile.name : selectedFile.name + '.md',
             content: content,
-            timestamp: new Date().toISOString()
+            category: category,
+            message: `Add note: ${selectedFile.name} in ${category}`
         };
         
-        // Save to local storage (simulating upload)
-        await saveNoteToStorage(fileData);
+        const response = await fetch('/api/upload-note', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(uploadData)
+        });
         
-        // Success
-        alert('File uploaded successfully!');
-        window.location.href = 'dashboard.html';
+        const result = await response.json();
+        
+        if (result.success) {
+            showAlert('✅ Note uploaded to GitHub successfully!', 'success');
+            // Reset form
+            selectedFile = null;
+            document.getElementById('fileInfo').style.display = 'none';
+            document.getElementById('fileInput').value = '';
+            categorySelect.value = '';
+            
+            setTimeout(() => {
+                window.location.href = 'dashboard.html';
+            }, 2000);
+        } else {
+            // Better error messages
+            let errorMsg = result.message || 'Upload failed';
+            if (errorMsg.includes('Bad credentials')) {
+                errorMsg = 'GitHub authentication failed. Check your token in the .env file.';
+            } else if (errorMsg.includes('Not Found')) {
+                errorMsg = 'Repository not found. Check GITHUB_OWNER and GITHUB_REPO in .env.';
+            }
+            throw new Error(errorMsg);
+        }
         
     } catch (error) {
         console.error('Upload error:', error);
-        alert('Error uploading file: ' + error.message);
+        showAlert('❌ Upload failed: ' + error.message, 'error');
         
-        // Reset button
         const uploadBtn = document.getElementById('uploadBtn');
-        uploadBtn.innerHTML = originalText;
+        uploadBtn.innerHTML = 'Upload File';
         uploadBtn.disabled = false;
     }
 }
-
-// Read file content
-function readFileContent(file) {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        
-        reader.onload = function(e) {
-            resolve(e.target.result);
-        };
-        
-        reader.onerror = function(e) {
-            reject(new Error('Failed to read file'));
-        };
-        
-        reader.readAsText(file);
-    });
+// Alert system
+function showAlert(message, type = 'info') {
+    // Remove any existing alerts
+    const existingAlerts = document.querySelectorAll('.custom-alert');
+    existingAlerts.forEach(alert => alert.remove());
+    
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `custom-alert alert-${type}`;
+    alertDiv.innerHTML = `
+        <div class="alert-content">
+            <span class="alert-message">${message}</span>
+            <button class="alert-close" onclick="this.parentElement.parentElement.remove()">×</button>
+        </div>
+    `;
+    
+    document.body.appendChild(alertDiv);
+    
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+        if (alertDiv.parentElement) {
+            alertDiv.remove();
+        }
+    }, 5000);
 }
 
-// Save note to local storage (simulating server upload)
-function saveNoteToStorage(fileData) {
-    return new Promise((resolve) => {
-        // Get existing notes
-        const existingNotes = JSON.parse(localStorage.getItem('userNotes') || '[]');
+async function checkGitHubStatus() {
+    try {
+        const response = await fetch('/api/github-token');
+        const data = await response.json();
         
-        // Add new note
-        const newNote = {
-            id: Date.now().toString(),
-            title: fileData.filename.replace('.md', '').replace(/-/g, ' '),
-            category: fileData.category,
-            path: `notes/${fileData.category}/${fileData.filename}`,
-            date: new Date().toISOString().split('T')[0],
-            content: fileData.content,
-            preview: fileData.content.substring(0, 200) + '...'
-        };
-        
-        existingNotes.push(newNote);
-        localStorage.setItem('userNotes', JSON.stringify(existingNotes));
-        
-        resolve(newNote);
-    });
+        if (!data.hasToken) {
+            showAlert('GitHub not configured - notes will be saved locally only', 'warning');
+        }
+    } catch (error) {
+        console.log('GitHub status check failed:', error);
+    }
 }
 
 // Initialize on page load

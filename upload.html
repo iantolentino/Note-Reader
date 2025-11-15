@@ -30,25 +30,27 @@
                             <h4 class="mb-0">Upload Markdown File</h4>
                         </div>
                         <div class="card-body p-4">
-                            <!-- Category Selection -->
-                            <div class="mb-4">
-                                <label for="noteCategory" class="form-label">Category</label>
-                                <select class="form-control" id="noteCategory" required>
-                                    <option value="">Select category</option>
-                                    <option value="programming">Programming</option>
-                                    <option value="personal">Personal</option>
-                                    <option value="work">Work</option>
-                                    <option value="study">Study</option>
-                                    <option value="ideas">Ideas</option>
-                                    <option value="other">Other</option>
-                                </select>
-                                
-                                <div id="customCategory" class="mt-2" style="display: none;">
-                                    <label for="customCategoryInput" class="form-label">Custom Category</label>
-                                    <input type="text" class="form-control" id="customCategoryInput" 
-                                           placeholder="Enter new category name">
-                                </div>
-                            </div>
+                          <!-- Category Selection -->
+<div class="mb-4">
+    <label for="noteCategory" class="form-label">Category</label>
+    <select class="form-control" id="noteCategory" required>
+        <option value="">Select category</option>
+        <option value="programming">Programming</option>
+        <option value="personal">Personal</option>
+        <option value="work">Work</option>
+        <option value="study">Study</option>
+        <option value="ideas">Ideas</option>
+        <option value="other">Other (custom)</option>
+    </select>
+    
+    <div id="customCategory" class="mt-2" style="display: none;">
+        <label for="customCategoryInput" class="form-label">Custom Category Name</label>
+        <input type="text" class="form-control" id="customCategoryInput" 
+               placeholder="Enter your custom category name..."
+               required>
+        <div class="form-text">This will create a new category folder in GitHub</div>
+    </div>
+</div>
                             
                             <!-- File Upload -->
                             <div class="mb-4">
@@ -79,8 +81,8 @@
             </div>
         </div>
     </main>
-
-    <script src="assets/js/config.js"></script>
-    <script src="assets/js/upload.js"></script>
+<script src="assets/js/auth.js"></script>
+<script src="assets/js/config.js"></script>
+<script src="assets/js/upload.js"></script>
 </body>
 </html>

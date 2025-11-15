@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Notes Dashboard</title>
+    <title>Dashboard - Notes</title>
     <link href="assets/css/bootstrap.min.css" rel="stylesheet">
     <link href="assets/css/styles.css" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -12,17 +12,20 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90' fill='white'>N</text></svg>">
 </head>
 <body class="main-container">
+    <!-- Navigation -->
     <nav class="navbar navbar-expand-lg">
         <div class="container">
             <a class="navbar-brand" href="dashboard.html">
-                Notes
+                <div class="brand-logo">N</div>
+                <span>Notes</span>
             </a>
-            
             <div class="navbar-nav ms-auto">
-                <a href="upload.html" class="btn btn-outline-light me-2">
+                <a href="upload.html" class="btn btn-primary me-2">
+                    <span class="btn-icon">+</span>
                     New Note
                 </a>
-                <button class="btn btn-outline-secondary" onclick="logout()">
+                <button class="btn btn-outline-light" onclick="logout()">
+                    <span class="btn-icon">🚪</span>
                     Logout
                 </button>
             </div>
@@ -31,62 +34,115 @@
 
     <main class="content-area">
         <div class="container">
-            <!-- Stats Overview -->
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-number" id="totalNotes">0</div>
-                    <div class="stat-label">Total Notes</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number" id="totalCategories">0</div>
-                    <div class="stat-label">Categories</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number" id="recentNotes">0</div>
-                    <div class="stat-label">This Month</div>
-                </div>
-            </div>
+            <div class="row">
+                <!-- Sidebar Stats -->
+                <div class="col-lg-3 mb-4">
+                    <div class="sidebar-sticky">
+                        <!-- User Profile Card -->
+                        <div class="profile-card card">
+                            <div class="card-body text-center p-4">
+                                <div class="user-avatar">👤</div>
+                                <h6 class="user-name mt-3" id="userName">Admin</h6>
+                                <p class="user-email text-muted">notes@example.com</p>
+                            </div>
+                        </div>
 
-            <!-- Search Section -->
-            <div class="card mb-4">
-                <div class="card-body p-4">
-                    <div class="search-container">
-                        <span class="search-icon">Search</span>
-                        <input type="text" id="searchBox" class="form-control search-input" 
-                               placeholder="Search notes by title, category, or content..."
-                               oninput="filterResults()">
+                        <!-- Stats Overview -->
+                        <div class="stats-card card mt-3">
+                            <div class="card-body p-3">
+                                <h6 class="card-title mb-3">Overview</h6>
+                                <div class="stat-item">
+                                    <div class="stat-icon">📝</div>
+                                    <div class="stat-info">
+                                        <div class="stat-number" id="totalNotes">0</div>
+                                        <div class="stat-label">Total Notes</div>
+                                    </div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-icon">📁</div>
+                                    <div class="stat-info">
+                                        <div class="stat-number" id="totalCategories">0</div>
+                                        <div class="stat-label">Categories</div>
+                                    </div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-icon">🕒</div>
+                                    <div class="stat-info">
+                                        <div class="stat-number" id="recentNotes">0</div>
+                                        <div class="stat-label">This Month</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Quick Actions -->
+                        <div class="actions-card card mt-3">
+                            <div class="card-body p-3">
+                                <h6 class="card-title mb-3">Quick Actions</h6>
+                                <a href="upload.html" class="action-btn">
+                                    <span class="action-icon">📤</span>
+                                    Upload Note
+                                </a>
+                                <button class="action-btn" onclick="refreshNotes()">
+                                    <span class="action-icon">🔄</span>
+                                    Refresh Notes
+                                </button>
+                                <button class="action-btn" onclick="exportNotes()">
+                                    <span class="action-icon">📥</span>
+                                    Export All
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
-            
-            <!-- Results Header -->
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h4 class="mb-0">Your Notes</h4>
-                <span id="resultsCount" class="text-muted">0 notes</span>
-            </div>
-            
-            <!-- Notes Grid -->
-            <div id="notesList" class="notes-grid">
-                <!-- Notes will be loaded here dynamically -->
-            </div>
-            
-            <!-- No Results Message -->
-            <div id="noResults" class="empty-state" style="display: none;">
-                <div class="empty-state-icon">📄</div>
-                <h5 class="text-muted mb-3">No notes found</h5>
-                <p class="text-muted mb-4">Try adjusting your search or create a new note</p>
-                <a href="upload.html" class="btn btn-primary">Create Note</a>
+
+                <!-- Main Content -->
+                <div class="col-lg-9">
+                    <!-- Search Header -->
+                    <div class="search-header card">
+                        <div class="card-body p-4">
+                            <div class="row align-items-center">
+                                <div class="col-md-6">
+                                    <h4 class="mb-1">Your Notes</h4>
+                                    <p class="text-muted mb-0" id="resultsCount">0 notes</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="search-box">
+                                        <input type="text" 
+                                               id="searchBox" 
+                                               class="form-control" 
+                                               placeholder="Search notes, categories, or content..."
+                                               onkeyup="filterResults()">
+                                        <span class="search-icon">🔍</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Notes Grid -->
+                    <div class="notes-container mt-4">
+                        <div id="notesList" class="notes-grid">
+                            <!-- Notes will be rendered here -->
+                        </div>
+                        
+                        <!-- Empty State -->
+                        <div id="noResults" class="empty-state text-center py-5" style="display: none;">
+                            <div class="empty-icon">📚</div>
+                            <h5 class="mt-3">No notes found</h5>
+                            <p class="text-muted">Get started by uploading your first markdown note.</p>
+                            <a href="upload.html" class="btn btn-primary mt-2">
+                                <span class="btn-icon">+</span>
+                                Upload Note
+                            </a>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </main>
 
-    <!-- Floating Action Button -->
-    <button class="fab" onclick="window.location.href='upload.html'" title="Create New Note">
-        +
-    </button>
-
-    <script src="assets/js/config.js"></script>
-    <script src="assets/js/renderer.js"></script>
+    <script src="assets/js/auth.js"></script>
     <script src="assets/js/dashboard.js"></script>
 </body>
 </html>

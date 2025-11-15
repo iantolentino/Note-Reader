@@ -1,25 +1,28 @@
-// Configuration file - Keep this private and add to .gitignore
+
+// Client-side configuration
 const CONFIG = {
-    // GitHub Pages deployment - update with your actual repo info
-    GITHUB_USERNAME: "iantolentino",
-    GITHUB_REPO: "Note-Reader",
+    IS_PRODUCTION: true,
     
-    // Login credentials (base64 encoded)
+    // Base64 encoded credentials (admin/admin)
     CREDENTIALS: {
-        username: "QWRtaW4=", // Base64 encoded "Admin" - CORRECT
-        password: "dGVzdHBhc3N3b3Jk" // Base64 encoded "testpassword" - CORRECT
+        username: "YWRtaW4=", // admin
+        password: "YWRtaW4="  // admin
     },
     
-    // App settings
-    APP: {
-        name: "My Notes",
-        version: "1.0.0",
-        sessionTimeout: 2 // hours
+    // GitHub Configuration
+    GITHUB: {
+        OWNER: 'iantolentino',
+        REPO: 'Note-Reader',
+        BRANCH: 'main'
     }
 };
 
-// Debug helper - remove in production
-console.log('Config loaded:', {
-    username: atob(CONFIG.CREDENTIALS.username),
-    repo: CONFIG.GITHUB_REPO
-});
+// Base64 decode helper
+function decodeBase64(str) {
+    try {
+        return atob(str);
+    } catch (e) {
+        console.error('Error decoding base64:', e);
+        return null;
+    }
+}
