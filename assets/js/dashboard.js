@@ -257,3 +257,21 @@ function logout() {
     sessionStorage.removeItem('notesAppSession');
     window.location.href = 'index.html';
 }
+// Add to dashboard.js - Statistics functions
+function updateStats(notes) {
+    // Total notes
+    document.getElementById('totalNotes').textContent = notes.length;
+    
+    // Unique categories
+    const categories = [...new Set(notes.map(note => note.category))];
+    document.getElementById('totalCategories').textContent = categories.length;
+    
+    // Recent notes (this month)
+    const currentMonth = new Date().toISOString().slice(0, 7);
+    const recentNotes = notes.filter(note => note.date && note.date.startsWith(currentMonth));
+    document.getElementById('recentNotes').textContent = recentNotes.length;
+}
+
+// Call this in initDashboard after loading notes
+// Add this line after renderNotesList(notesIndex);
+updateStats(notesIndex);

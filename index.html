@@ -3,21 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Notes App - Login</title>
+    <title>Notes - Login</title>
     <link href="assets/css/bootstrap.min.css" rel="stylesheet">
     <link href="assets/css/styles.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90' fill='white'>N</text></svg>">
 </head>
 <body class="login-page">
     <div class="container">
         <div class="row justify-content-center">
             <div class="col-12 col-sm-10 col-md-8 col-lg-6 col-xl-4">
-                <div class="card login-card shadow">
+                <div class="card login-card">
                     <div class="card-body p-4 p-md-5">
                         <div class="text-center mb-4">
-                            <h1 class="display-6 text-primary mb-2">📝</h1>
-                            <h2 class="h4 mb-2">Notes App</h2>
-                            <p class="text-muted">Your personal knowledge base</p>
+                            <h2 class="h3 mb-2">Notes</h2>
+                            <p class="text-muted">Access your personal knowledge base</p>
                         </div>
                         
                         <div id="loginError" class="alert alert-danger d-none" role="alert"></div>
@@ -25,21 +27,21 @@
                         <form onsubmit="event.preventDefault(); login();">
                             <div class="mb-3">
                                 <label for="username" class="form-label">Username</label>
-                                <input type="text" class="form-control" id="username" placeholder="Enter your username" required>
+                                <input type="text" class="form-control" id="username" placeholder="Enter username" required>
                             </div>
                             
                             <div class="mb-4">
                                 <label for="password" class="form-label">Password</label>
-                                <input type="password" class="form-control" id="password" placeholder="Enter your password" required>
+                                <input type="password" class="form-control" id="password" placeholder="Enter password" required>
                             </div>
                             
-                            <button type="submit" id="loginBtn" class="btn btn-primary w-100 py-2 mb-3">
+                            <button type="submit" id="loginBtn" class="btn btn-primary w-100 py-3 mb-3">
                                 Sign In
                             </button>
                         </form>
                         
                         <div class="text-center">
-                            <small class="text-muted">Secure • Private • Fast</small>
+                            <small class="text-muted">Secure encrypted access</small>
                         </div>
                     </div>
                 </div>
