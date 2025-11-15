@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Note - My Notes</title>
+    <link href="assets/css/bootstrap.min.css" rel="stylesheet">
+    <link href="assets/css/styles.css" rel="stylesheet">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/0/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90' fill='white'>N</text></svg>">
+</head>
+<body class="main-container">
+    <nav class="navbar navbar-expand-lg">
+        <div class="container">
+            <a class="navbar-brand" href="dashboard.html">📝 My Notes</a>
+            <div class="navbar-nav">
+                <a href="dashboard.html" class="btn btn-outline-light me-2">← Dashboard</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="content-area py-4">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-12 col-lg-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h4 class="mb-0">📤 Upload New Note</h4>
+                        </div>
+                        <div class="card-body p-4">
+                            <!-- Category Selection -->
+                            <div class="mb-4">
+                                <label for="noteCategory" class="form-label">Category</label>
+                                <select class="form-select" id="noteCategory">
+                                    <option value="">Select a category...</option>
+                                </select>
+                                
+                                <div id="customCategory" class="mt-2" style="display: none;">
+                                    <label for="customCategoryInput" class="form-label">Custom Category</label>
+                                    <input type="text" class="form-control" id="customCategoryInput" 
+                                           placeholder="Enter category name (e.g., work, study, ideas)">
+                                    <div class="form-text">This will create a new folder for your notes</div>
+                                </div>
+                            </div>
+                            
+                            <!-- Filename -->
+                            <div class="mb-4">
+                                <label for="noteName" class="form-label">Filename</label>
+                                <input type="text" class="form-control" id="noteName" 
+                                       placeholder="e.g., my-awesome-note.md">
+                                <div class="form-text">Must end with .md extension. Use hyphens instead of spaces.</div>
+                            </div>
+                            
+                            <!-- Content -->
+                            <div class="mb-4">
+                                <label for="noteContent" class="form-label">Note Content</label>
+                                <textarea class="form-control" id="noteContent" rows="15" 
+                                          placeholder="Write your markdown note here...&#10;&#10;You can use:&#10;# Headers&#10;**Bold text**&#10;*Italic text*&#10;- Lists&#10;`code`&#10;etc."></textarea>
+                                <div class="form-text">Supports full Markdown syntax</div>
+                            </div>
+                            
+                            <!-- Actions -->
+                            <div class="d-grid gap-2 d-md-flex">
+                                <button type="button" id="uploadBtn" class="btn btn-primary flex-fill" onclick="uploadNote()">
+                                    Upload Note
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary" onclick="downloadNote()">
+                                    Download for Manual Upload
+                                </button>
+                                <a href="dashboard.html" class="btn btn-secondary">Cancel</a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Help Section -->
+                    <div class="card mt-4">
+                        <div class="card-body">
+                            <h6>📝 Markdown Tips</h6>
+                            <ul class="small text-muted mb-0">
+                                <li>Use # for headers, ## for subheaders</li>
+                                <li>**Bold** and *Italic* text</li>
+                                <li>- Bullet lists and 1. Numbered lists</li>
+                                <li>`code` for inline code and ``` for code blocks</li>
+                                <li>[Links](url) and ![Images](image-url)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="assets/js/config.js"></script>
+    <script src="assets/js/upload.js"></script>
+</body>
+</html>
