@@ -1,4 +1,3 @@
-
 /**
  * Enhanced dashboard with GitHub integration
  */
@@ -32,6 +31,7 @@ async function initDashboard() {
         showErrorState('Failed to load notes: ' + error.message);
     }
 }
+
 // Enhanced notes loading
 async function loadNotes() {
     try {
@@ -71,19 +71,60 @@ async function loadNotes() {
     }
 }
 
+function updateStats(notes) {
+    // Only update elements that exist
+    const totalNotesElem = document.getElementById('totalNotesMini');
+    const totalCategoriesElem = document.getElementById('totalCategoriesMini');
+    const recentNotesElem = document.getElementById('recentNotesMini');
+    
+    if (totalNotesElem) {
+        totalNotesElem.textContent = notes.length;
+    }
+    
+    const categories = [...new Set(notes.map(note => note.category))];
+    if (totalCategoriesElem) {
+        totalCategoriesElem.textContent = categories.length;
+    }
+    
+    const thisMonth = notes.filter(note => {
+        const noteDate = new Date(note.lastModified || note.date);
+        const now = new Date();
+        return noteDate.getMonth() === now.getMonth() && 
+               noteDate.getFullYear() === now.getFullYear();
+    });
+    
+    if (recentNotesElem) {
+        recentNotesElem.textContent = thisMonth.length;
+    }
+}
+
+function updateResultsCount(notes) {
+    const resultsCountElem = document.getElementById('resultsCount');
+    if (resultsCountElem) {
+        resultsCountElem.textContent = `${notes.length} notes`;
+    }
+}
+
 function renderNotesList(notes) {
     const notesList = document.getElementById('notesList');
     const noResults = document.getElementById('noResults');
     
-    if (!notesList) return;
-    
-    if (notes.length === 0) {
-        notesList.innerHTML = '';
-        noResults.style.display = 'block';
+    if (!notesList) {
+        console.error('Notes list element not found');
         return;
     }
     
-    noResults.style.display = 'none';
+    if (notes.length === 0) {
+        notesList.innerHTML = '';
+        if (noResults) {
+            noResults.style.display = 'block';
+        }
+        return;
+    }
+    
+    if (noResults) {
+        noResults.style.display = 'none';
+    }
     
     notesList.innerHTML = notes.map(note => `
         <div class="note-card" onclick="viewNote('${note.id}')">
@@ -92,8 +133,8 @@ function renderNotesList(notes) {
                     ${note.category ? note.category.charAt(0).toUpperCase() : 'N'}
                 </div>
                 <div class="note-meta">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <div>
+                    <div class="d-flex justify-content-between align-items-start w-100">
+                        <div class="flex-grow-1">
                             <div class="note-author">${note.title || 'Untitled Note'}</div>
                             <div class="note-category">${note.category || 'uncategorized'}</div>
                         </div>
@@ -117,35 +158,23 @@ function renderNotesList(notes) {
 }
 
 function formatDate(dateString) {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-        year: 'numeric', 
-        month: 'short', 
-        day: 'numeric' 
-    });
-}
-
-function updateStats(notes) {
-    document.getElementById('totalNotes').textContent = notes.length;
-    
-    const categories = [...new Set(notes.map(note => note.category))];
-    document.getElementById('totalCategories').textContent = categories.length;
-    
-    const thisMonth = notes.filter(note => {
-        const noteDate = new Date(note.lastModified || note.date);
-        const now = new Date();
-        return noteDate.getMonth() === now.getMonth() && 
-               noteDate.getFullYear() === now.getFullYear();
-    });
-    document.getElementById('recentNotes').textContent = thisMonth.length;
-}
-
-function updateResultsCount(notes) {
-    document.getElementById('resultsCount').textContent = `${notes.length} notes`;
+    try {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', { 
+            year: 'numeric', 
+            month: 'short', 
+            day: 'numeric' 
+        });
+    } catch (e) {
+        return 'Unknown date';
+    }
 }
 
 function filterResults() {
-    const searchTerm = document.getElementById('searchBox').value.toLowerCase().trim();
+    const searchBox = document.getElementById('searchBox');
+    if (!searchBox) return;
+    
+    const searchTerm = searchBox.value.toLowerCase().trim();
     
     if (!searchTerm) {
         notesIndex = [...allNotes];
@@ -208,10 +237,10 @@ function showErrorState(message) {
     const notesList = document.getElementById('notesList');
     if (notesList) {
         notesList.innerHTML = `
-            <div class="error-state">
-                <div class="error-icon">⚠️</div>
+            <div class="error-state text-center py-5">
+                <div class="error-icon" style="font-size: 3rem; margin-bottom: 1rem;">⚠️</div>
                 <h5>${message}</h5>
-                <button onclick="initDashboard()" class="btn btn-primary">Retry</button>
+                <button onclick="initDashboard()" class="btn btn-primary mt-3">Retry</button>
             </div>
         `;
     }
@@ -230,7 +259,6 @@ function showAlert(message) {
     setTimeout(() => alertDiv.remove(), 3000);
 }
 
-// Add these new functions to dashboard.js
 function refreshNotes() {
     showLoadingState();
     setTimeout(async () => {
@@ -238,7 +266,7 @@ function refreshNotes() {
         renderNotesList(notesIndex);
         updateStats(notesIndex);
         updateResultsCount(notesIndex);
-        showAlert('Notes refreshed successfully!', 'success');
+        showAlert('Notes refreshed successfully!');
     }, 1000);
 }
 
@@ -251,53 +279,7 @@ function exportNotes() {
     link.download = 'notes-export.json';
     link.click();
     
-    showAlert('Notes exported successfully!', 'success');
-}
-
-// Update the render function to use the new design
-function renderNotesList(notes) {
-    const notesList = document.getElementById('notesList');
-    const noResults = document.getElementById('noResults');
-    
-    if (!notesList) return;
-    
-    if (notes.length === 0) {
-        notesList.innerHTML = '';
-        noResults.style.display = 'block';
-        return;
-    }
-    
-    noResults.style.display = 'none';
-    
-    notesList.innerHTML = notes.map(note => `
-        <div class="note-card" onclick="viewNote('${note.id}')">
-            <div class="note-header">
-                <div class="note-avatar">
-                    ${note.category ? note.category.charAt(0).toUpperCase() : 'N'}
-                </div>
-                <div class="note-meta">
-                    <div class="d-flex justify-content-between align-items-start w-100">
-                        <div class="flex-grow-1">
-                            <div class="note-author">${note.title || 'Untitled Note'}</div>
-                            <div class="note-category">${note.category || 'uncategorized'}</div>
-                        </div>
-                        <div class="note-date">${formatDate(note.lastModified || note.date)}</div>
-                    </div>
-                </div>
-            </div>
-            <div class="note-content">
-                <div class="note-preview">${note.preview || 'No preview available'}</div>
-            </div>
-            <div class="note-actions">
-                <button class="note-action" onclick="event.stopPropagation(); viewOnGitHub('${note.url}')">
-                    <span>View on GitHub</span>
-                </button>
-                <button class="note-action" onclick="event.stopPropagation(); shareNote('${note.id}')">
-                    <span>Share</span>
-                </button>
-            </div>
-        </div>
-    `).join('');
+    showAlert('Notes exported successfully!');
 }
 
 // Initialize on page load

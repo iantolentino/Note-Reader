@@ -1,5 +1,5 @@
 /**
- * Enhanced file upload with GitHub integration
+ * Enhanced file upload with GitHub integration - Mobile Optimized
  */
 
 let selectedFile = null;
@@ -36,7 +36,7 @@ function setupCategorySelector() {
             const customInput = document.getElementById('customCategoryInput');
             if (customInput) {
                 customInput.placeholder = 'Enter category name...';
-                customInput.focus();
+                setTimeout(() => customInput.focus(), 100);
             }
         } else {
             customCategoryDiv.style.display = 'none';
@@ -50,47 +50,45 @@ function setupFileUpload() {
     const fileInput = document.getElementById('fileInput');
     const uploadArea = document.getElementById('fileUploadArea');
     
-    // Remove all existing event listeners first
-    uploadArea.replaceWith(uploadArea.cloneNode(true));
-    const newUploadArea = document.getElementById('fileUploadArea');
-    const newFileInput = document.getElementById('fileInput');
+    if (!fileInput || !uploadArea) {
+        console.error('File upload elements not found');
+        return;
+    }
     
-    // Single click handler - only trigger on actual area click
-    newUploadArea.addEventListener('click', (e) => {
-        // Only trigger if clicking the upload area itself, not children
-        if (e.target === newUploadArea || 
+    // Click handler for upload area
+    uploadArea.addEventListener('click', (e) => {
+        // Only trigger if clicking the upload area itself or its direct children
+        if (e.target === uploadArea || 
             e.target.classList.contains('upload-icon') || 
             e.target.tagName === 'H5' || 
-            e.target.tagName === 'P') {
+            e.target.tagName === 'P' ||
+            e.target.classList.contains('btn')) {
             e.preventDefault();
             e.stopPropagation();
-            newFileInput.click();
+            fileInput.click();
         }
     });
     
     // File input change handler
-    newFileInput.addEventListener('change', handleFileSelect);
+    fileInput.addEventListener('change', handleFileSelect);
     
-    // Drag and drop
-    newUploadArea.addEventListener('dragover', (e) => {
+    // Drag and drop (for desktop)
+    uploadArea.addEventListener('dragover', (e) => {
         e.preventDefault();
-        newUploadArea.style.borderColor = '#ffffff';
-        newUploadArea.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+        uploadArea.classList.add('dragover');
     });
     
-    newUploadArea.addEventListener('dragleave', (e) => {
+    uploadArea.addEventListener('dragleave', (e) => {
         e.preventDefault();
-        if (!newUploadArea.contains(e.relatedTarget)) {
-            newUploadArea.style.borderColor = '#38444d';
-            newUploadArea.style.backgroundColor = 'transparent';
+        if (!uploadArea.contains(e.relatedTarget)) {
+            uploadArea.classList.remove('dragover');
         }
     });
     
-    newUploadArea.addEventListener('drop', (e) => {
+    uploadArea.addEventListener('drop', (e) => {
         e.preventDefault();
         e.stopPropagation();
-        newUploadArea.style.borderColor = '#38444d';
-        newUploadArea.style.backgroundColor = 'transparent';
+        uploadArea.classList.remove('dragover');
         
         const files = e.dataTransfer.files;
         if (files.length > 0) {
@@ -106,7 +104,14 @@ function handleFileSelect(event) {
     // Validate file type
     if (!file.name.endsWith('.md')) {
         showAlert('Please select a Markdown (.md) file', 'error');
-        event.target.value = ''; // Reset input
+        resetFileInput();
+        return;
+    }
+    
+    // Validate file size (10MB limit)
+    if (file.size > 10 * 1024 * 1024) {
+        showAlert('File size too large. Please select a file smaller than 10MB.', 'error');
+        resetFileInput();
         return;
     }
     
@@ -114,12 +119,20 @@ function handleFileSelect(event) {
     displayFileInfo(file);
     
     // Auto-focus on category selection after file is chosen
-    document.getElementById('noteCategory').focus();
+    setTimeout(() => {
+        document.getElementById('noteCategory').focus();
+    }, 300);
 }
 
 function resetFileInput() {
     const fileInput = document.getElementById('fileInput');
     fileInput.value = '';
+    selectedFile = null;
+}
+
+function clearFileSelection() {
+    resetFileInput();
+    document.getElementById('fileInfo').style.display = 'none';
 }
 
 function displayFileInfo(file) {
@@ -127,9 +140,11 @@ function displayFileInfo(file) {
     const fileName = document.getElementById('fileName');
     const fileSize = document.getElementById('fileSize');
     
-    fileName.textContent = file.name;
-    fileSize.textContent = formatFileSize(file.size);
-    fileInfo.style.display = 'block';
+    if (fileInfo && fileName && fileSize) {
+        fileName.textContent = file.name;
+        fileSize.textContent = formatFileSize(file.size);
+        fileInfo.style.display = 'block';
+    }
 }
 
 function formatFileSize(bytes) {
@@ -149,7 +164,7 @@ function readFileContent(file) {
     });
 }
 
-// Enhanced upload function
+// Enhanced upload function with better mobile UX
 async function uploadFile() {
     const categorySelect = document.getElementById('noteCategory');
     const customCategoryInput = document.getElementById('customCategoryInput');
@@ -164,12 +179,14 @@ async function uploadFile() {
         category = customCategoryInput?.value.trim().toLowerCase();
         if (!category) {
             showAlert('Please specify a custom category', 'warning');
+            customCategoryInput?.focus();
             return;
         }
     }
     
     if (!category) {
         showAlert('Please select or specify a category', 'warning');
+        categorySelect.focus();
         return;
     }
 
@@ -178,6 +195,11 @@ async function uploadFile() {
         const originalText = uploadBtn.innerHTML;
         uploadBtn.innerHTML = '<span class="loading-spinner"></span> Uploading...';
         uploadBtn.disabled = true;
+        
+        // Show progress for large files
+        if (selectedFile.size > 1024 * 1024) { // Over 1MB
+            showAlert('Uploading large file, please wait...', 'info');
+        }
         
         const content = await readFileContent(selectedFile);
         
@@ -204,10 +226,10 @@ async function uploadFile() {
         if (result.success) {
             showAlert('✅ Note uploaded to GitHub successfully!', 'success');
             // Reset form
-            selectedFile = null;
-            document.getElementById('fileInfo').style.display = 'none';
-            document.getElementById('fileInput').value = '';
+            clearFileSelection();
             categorySelect.value = '';
+            document.getElementById('customCategoryInput').value = '';
+            document.getElementById('customCategory').style.display = 'none';
             
             setTimeout(() => {
                 window.location.href = 'dashboard.html';
@@ -219,6 +241,8 @@ async function uploadFile() {
                 errorMsg = 'GitHub authentication failed. Check your token in the .env file.';
             } else if (errorMsg.includes('Not Found')) {
                 errorMsg = 'Repository not found. Check GITHUB_OWNER and GITHUB_REPO in .env.';
+            } else if (errorMsg.includes('large')) {
+                errorMsg = 'File too large for GitHub. Try a smaller file.';
             }
             throw new Error(errorMsg);
         }
@@ -228,10 +252,11 @@ async function uploadFile() {
         showAlert('❌ Upload failed: ' + error.message, 'error');
         
         const uploadBtn = document.getElementById('uploadBtn');
-        uploadBtn.innerHTML = 'Upload File';
+        uploadBtn.innerHTML = 'Upload to GitHub';
         uploadBtn.disabled = false;
     }
 }
+
 // Alert system
 function showAlert(message, type = 'info') {
     // Remove any existing alerts
