@@ -27,47 +27,49 @@
                 <div class="col-12 col-lg-8">
                     <div class="card">
                         <div class="card-header">
-                            <h4 class="mb-0">Upload New Note</h4>
+                            <h4 class="mb-0">Upload Markdown File</h4>
                         </div>
                         <div class="card-body p-4">
                             <!-- Category Selection -->
                             <div class="mb-4">
                                 <label for="noteCategory" class="form-label">Category</label>
-                                <select class="form-control" id="noteCategory">
+                                <select class="form-control" id="noteCategory" required>
                                     <option value="">Select category</option>
+                                    <option value="programming">Programming</option>
+                                    <option value="personal">Personal</option>
+                                    <option value="work">Work</option>
+                                    <option value="study">Study</option>
+                                    <option value="ideas">Ideas</option>
+                                    <option value="other">Other</option>
                                 </select>
                                 
                                 <div id="customCategory" class="mt-2" style="display: none;">
                                     <label for="customCategoryInput" class="form-label">Custom Category</label>
                                     <input type="text" class="form-control" id="customCategoryInput" 
-                                           placeholder="Enter category name">
-                                    <div class="form-text">Create a new category folder</div>
+                                           placeholder="Enter new category name">
                                 </div>
                             </div>
                             
-                            <!-- Filename -->
+                            <!-- File Upload -->
                             <div class="mb-4">
-                                <label for="noteName" class="form-label">Filename</label>
-                                <input type="text" class="form-control" id="noteName" 
-                                       placeholder="example-note.md">
-                                <div class="form-text">Use .md extension and hyphens for spaces</div>
-                            </div>
-                            
-                            <!-- Content -->
-                            <div class="mb-4">
-                                <label for="noteContent" class="form-label">Note Content</label>
-                                <textarea class="form-control" id="noteContent" rows="15" 
-                                          placeholder="Write your note in Markdown format..."></textarea>
-                                <div class="form-text">Supports Markdown syntax</div>
+                                <label class="form-label">Upload Markdown File</label>
+                                <div class="file-upload-area" id="fileUploadArea" onclick="document.getElementById('fileInput').click()">
+                                    <div class="upload-icon">📁</div>
+                                    <h5>Click to upload or drag and drop</h5>
+                                    <p class="text-muted">.md files only</p>
+                                    <input type="file" id="fileInput" class="file-input" accept=".md" onchange="handleFileSelect(event)">
+                                </div>
+                                <div id="fileInfo" class="file-info" style="display: none;">
+                                    <strong>Selected file:</strong> <span id="fileName"></span>
+                                    <br>
+                                    <small class="text-muted">Size: <span id="fileSize"></span></small>
+                                </div>
                             </div>
                             
                             <!-- Actions -->
                             <div class="d-grid gap-2 d-md-flex">
-                                <button type="button" id="uploadBtn" class="btn btn-primary flex-fill" onclick="uploadNote()">
-                                    Upload Note
-                                </button>
-                                <button type="button" class="btn btn-outline-secondary" onclick="downloadNote()">
-                                    Download File
+                                <button type="button" id="uploadBtn" class="btn btn-primary flex-fill" onclick="uploadFile()">
+                                    Upload File
                                 </button>
                                 <a href="dashboard.html" class="btn btn-secondary">Cancel</a>
                             </div>

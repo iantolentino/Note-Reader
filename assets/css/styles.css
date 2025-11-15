@@ -26,21 +26,10 @@
 body {
     background: var(--bg-primary);
     color: var(--text-primary);
-    font-family: 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     line-height: 1.6;
     min-height: 100vh;
     font-weight: 400;
-}
-
-/* Typography Scale */
-h1, h2, h3, h4, h5, h6 {
-    font-weight: 600;
-    line-height: 1.2;
-}
-
-/* Smooth transitions for interactive elements */
-button, .card, .form-control {
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Layout */
@@ -55,7 +44,7 @@ button, .card, .form-control {
     padding: 2rem 0;
 }
 
-/* Navigation - Minimal & Clean */
+/* Navigation */
 .navbar {
     background: var(--bg-primary) !important;
     border-bottom: 1px solid var(--border-color);
@@ -73,13 +62,14 @@ button, .card, .form-control {
     letter-spacing: -0.02em;
 }
 
-/* Cards - Modern with subtle shadows */
+/* Cards */
 .card {
     background: var(--bg-card);
     border: 1px solid var(--border-color);
     border-radius: 12px;
     box-shadow: var(--shadow-md);
     overflow: hidden;
+    transition: all 0.3s ease;
 }
 
 .card:hover {
@@ -88,27 +78,7 @@ button, .card, .form-control {
     border-color: var(--border-light);
 }
 
-/* Note cards specific styling */
-.note-card {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    position: relative;
-}
-
-.note-card:hover .note-actions {
-    opacity: 1;
-}
-
-.note-actions {
-    position: absolute;
-    top: 1rem;
-    right: 1rem;
-    opacity: 0;
-    transition: opacity 0.2s ease;
-}
-
-/* Buttons - Clean and precise */
+/* Buttons */
 .btn {
     border-radius: 8px;
     font-weight: 500;
@@ -117,14 +87,13 @@ button, .card, .form-control {
     background: var(--bg-secondary);
     color: var(--text-primary);
     font-size: 0.875rem;
-    letter-spacing: -0.01em;
+    transition: all 0.2s ease;
 }
 
 .btn:hover {
     background: var(--bg-tertiary);
     border-color: var(--border-light);
     transform: translateY(-1px);
-    box-shadow: var(--shadow-sm);
 }
 
 .btn-primary {
@@ -137,21 +106,9 @@ button, .card, .form-control {
 .btn-primary:hover {
     background: var(--text-secondary);
     border-color: var(--text-secondary);
-    transform: translateY(-1px);
 }
 
-.btn-outline-light {
-    background: transparent;
-    border: 1px solid var(--border-light);
-    color: var(--text-primary);
-}
-
-.btn-outline-light:hover {
-    background: var(--bg-tertiary);
-    border-color: var(--text-primary);
-}
-
-/* Forms - Clean and functional */
+/* Forms */
 .form-control {
     background: var(--bg-secondary);
     border: 1px solid var(--border-color);
@@ -159,7 +116,7 @@ button, .card, .form-control {
     border-radius: 8px;
     padding: 0.875rem 1rem;
     font-size: 0.875rem;
-    font-weight: 400;
+    transition: all 0.2s ease;
 }
 
 .form-control:focus {
@@ -172,47 +129,58 @@ button, .card, .form-control {
 
 .form-control::placeholder {
     color: var(--text-muted);
-    font-weight: 400;
 }
 
-.form-label {
-    color: var(--text-secondary);
-    font-weight: 500;
-    font-size: 0.875rem;
-    margin-bottom: 0.5rem;
+/* File Upload */
+.file-upload-area {
+    border: 2px dashed var(--border-color);
+    border-radius: 12px;
+    padding: 3rem 2rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    background: var(--bg-secondary);
+    cursor: pointer;
 }
 
-/* Search box */
-.search-container {
-    position: relative;
+.file-upload-area:hover {
+    border-color: var(--text-primary);
+    background: var(--bg-tertiary);
 }
 
-.search-icon {
-    position: absolute;
-    left: 1rem;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--text-muted);
-    z-index: 5;
-    font-size: 0.875rem;
+.file-upload-area.dragover {
+    border-color: var(--text-primary);
+    background: var(--bg-tertiary);
 }
 
-.search-input {
-    padding-left: 2.5rem;
-    background: var(--bg-card);
+.file-input {
+    display: none;
+}
+
+.upload-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.7;
+}
+
+.file-info {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: var(--bg-tertiary);
+    border-radius: 8px;
     border: 1px solid var(--border-color);
 }
 
-.search-input:focus {
-    background: var(--bg-card);
-    border-color: var(--text-primary);
-}
-
-/* Notes grid - Responsive masonry */
+/* Notes Grid */
 .notes-grid {
     display: grid;
     gap: 1.5rem;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+}
+
+.note-card {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
 }
 
 .note-category {
@@ -222,60 +190,50 @@ button, .card, .form-control {
     border-radius: 6px;
     font-size: 0.75rem;
     font-weight: 500;
-    letter-spacing: 0.02em;
     text-transform: uppercase;
+    display: inline-block;
+    margin-bottom: 0.5rem;
 }
 
 .note-preview {
     color: var(--text-secondary);
     display: -webkit-box;
-    -webkit-line-clamp: 3;
+    -webkit-line-clamp: 4;
     -webkit-box-orient: vertical;
     overflow: hidden;
     flex-grow: 1;
     line-height: 1.5;
-    font-size: 0.875rem;
 }
 
-.note-date {
-    color: var(--text-muted);
-    font-size: 0.75rem;
-    font-weight: 400;
-}
-
-/* Markdown content - Clean typography */
+/* Markdown Content */
 .markdown-content {
-    line-height: 1.7;
-    font-size: 1rem;
+    line-height: 1.8;
+    max-width: 800px;
+    margin: 0 auto;
 }
 
 .markdown-content h1 {
-    color: var(--text-primary);
-    border-bottom: 1px solid var(--border-color);
-    padding-bottom: 0.5em;
-    margin-bottom: 1.5em;
-    font-size: 2rem;
+    font-size: 2.5rem;
     font-weight: 700;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 0.5rem;
 }
 
 .markdown-content h2 {
-    color: var(--text-primary);
-    margin-top: 2em;
-    margin-bottom: 1em;
-    font-size: 1.5rem;
+    font-size: 1.8rem;
     font-weight: 600;
+    margin: 2rem 0 1rem 0;
 }
 
 .markdown-content h3 {
-    color: var(--text-primary);
-    margin-top: 1.5em;
-    margin-bottom: 0.75em;
-    font-size: 1.25rem;
+    font-size: 1.4rem;
     font-weight: 600;
+    margin: 1.5rem 0 0.75rem 0;
 }
 
 .markdown-content p {
-    margin-bottom: 1em;
+    margin-bottom: 1rem;
     color: var(--text-secondary);
 }
 
@@ -283,18 +241,17 @@ button, .card, .form-control {
     background: var(--bg-secondary);
     padding: 0.2em 0.4em;
     border-radius: 4px;
-    color: var(--text-primary);
-    font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
-    font-size: 0.875em;
+    font-family: 'Monaco', 'Consolas', monospace;
+    font-size: 0.9em;
     border: 1px solid var(--border-color);
 }
 
 .markdown-content pre {
     background: var(--bg-secondary);
-    padding: 1.25em;
+    padding: 1.5rem;
     border-radius: 8px;
     overflow-x: auto;
-    margin: 1.5em 0;
+    margin: 1.5rem 0;
     border: 1px solid var(--border-color);
 }
 
@@ -302,30 +259,80 @@ button, .card, .form-control {
     background: none;
     padding: 0;
     border: none;
-    color: var(--text-primary);
 }
 
-/* Login page specific */
-.login-page {
-    background: var(--bg-primary);
+.markdown-content blockquote {
+    border-left: 4px solid var(--border-light);
+    padding-left: 1rem;
+    margin: 1.5rem 0;
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+.markdown-content ul, .markdown-content ol {
+    margin: 1rem 0;
+    padding-left: 2rem;
+}
+
+.markdown-content li {
+    margin-bottom: 0.5rem;
+    color: var(--text-secondary);
+}
+
+/* Login Page */
+.login-container {
+    min-height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 100vh;
+    background: var(--bg-primary);
+    padding: 2rem;
 }
 
 .login-card {
     width: 100%;
-    max-width: 400px;
+    max-width: 440px;
     background: var(--bg-card);
     border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 3rem 2.5rem;
     box-shadow: var(--shadow-xl);
 }
 
-/* Stats grid */
+.login-header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+}
+
+.login-logo {
+    width: 80px;
+    height: 80px;
+    background: var(--text-primary);
+    color: var(--bg-primary);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0 auto 1.5rem auto;
+}
+
+.login-title {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.login-subtitle {
+    color: var(--text-muted);
+    font-size: 1rem;
+}
+
+/* Stats */
 .stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 1rem;
     margin-bottom: 2rem;
 }
@@ -353,60 +360,7 @@ button, .card, .form-control {
     letter-spacing: 0.05em;
 }
 
-/* Loading animation */
-.loading-spinner {
-    display: inline-block;
-    width: 20px;
-    height: 20px;
-    border: 2px solid var(--border-color);
-    border-radius: 50%;
-    border-top-color: var(--text-primary);
-    animation: spin 1s ease-in-out infinite;
-}
-
-@keyframes spin {
-    to { transform: rotate(360deg); }
-}
-
-/* Floating action button */
-.fab {
-    position: fixed;
-    bottom: 2rem;
-    right: 2rem;
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-    background: var(--text-primary);
-    color: var(--bg-primary);
-    border: none;
-    box-shadow: var(--shadow-lg);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.5rem;
-    font-weight: 300;
-    z-index: 1000;
-    transition: all 0.2s ease;
-}
-
-.fab:hover {
-    transform: scale(1.05);
-    box-shadow: var(--shadow-xl);
-}
-
-/* Empty state */
-.empty-state {
-    text-align: center;
-    padding: 4rem 2rem;
-}
-
-.empty-state-icon {
-    font-size: 3rem;
-    margin-bottom: 1rem;
-    opacity: 0.5;
-}
-
-/* Responsive design */
+/* Responsive */
 @media (max-width: 768px) {
     .content-area {
         padding: 1rem 0;
@@ -417,37 +371,27 @@ button, .card, .form-control {
         gap: 1rem;
     }
     
-    .navbar {
-        padding: 1rem 0;
-    }
-    
-    .navbar-brand {
-        font-size: 1.25rem;
-    }
-    
-    .btn {
-        padding: 0.625rem 1.25rem;
-        font-size: 0.8125rem;
-    }
-    
-    .fab {
-        bottom: 1rem;
-        right: 1rem;
-        width: 48px;
-        height: 48px;
-        font-size: 1.25rem;
-    }
-    
-    .stats-grid {
-        grid-template-columns: 1fr;
-    }
-    
     .login-card {
+        padding: 2rem 1.5rem;
         margin: 1rem;
     }
     
+    .login-logo {
+        width: 60px;
+        height: 60px;
+        font-size: 1.5rem;
+    }
+    
+    .login-title {
+        font-size: 1.5rem;
+    }
+    
     .markdown-content {
-        font-size: 0.9375rem;
+        padding: 0 1rem;
+    }
+    
+    .markdown-content h1 {
+        font-size: 2rem;
     }
 }
 
@@ -457,59 +401,11 @@ button, .card, .form-control {
         padding-right: 1rem;
     }
     
-    .card {
-        border-radius: 8px;
+    .file-upload-area {
+        padding: 2rem 1rem;
     }
     
-    .form-control {
-        padding: 0.75rem 0.875rem;
-        font-size: 0.8125rem;
+    .stats-grid {
+        grid-template-columns: 1fr;
     }
-    
-    .stat-number {
-        font-size: 1.75rem;
-    }
-}
-
-/* Focus states for accessibility */
-.btn:focus,
-.form-control:focus {
-    outline: none;
-}
-
-/* Selection color */
-::selection {
-    background: rgba(255, 255, 255, 0.2);
-    color: var(--text-primary);
-}
-
-/* Scrollbar styling */
-::-webkit-scrollbar {
-    width: 6px;
-}
-
-::-webkit-scrollbar-track {
-    background: var(--bg-primary);
-}
-
-::-webkit-scrollbar-thumb {
-    background: var(--border-light);
-    border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-    background: var(--text-muted);
-}
-
-/* Utility classes */
-.text-muted {
-    color: var(--text-muted) !important;
-}
-
-.border-light {
-    border-color: var(--border-light) !important;
-}
-
-.bg-dark {
-    background: var(--bg-secondary) !important;
 }

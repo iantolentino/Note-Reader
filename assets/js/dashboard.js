@@ -1,83 +1,64 @@
 /**
- * Dashboard functionality for notes management
- * Handles note loading, searching, and display
+ * Dashboard functionality for file-based notes
  */
 
-// Global variables
 let notesIndex = [];
-let currentView = 'grid'; // 'grid' or 'detail'
 
 // Initialize dashboard
 async function initDashboard() {
-    console.log('Initializing dashboard...');
-    
-    // Check authentication
     if (!checkAuth()) {
         window.location.href = 'index.html';
         return;
     }
     
     try {
-        // Show loading state
         showLoadingState();
-        
-        // Load search index
-        await loadSearchIndex();
-        
-        // Render initial notes list
+        await loadNotes();
         renderNotesList(notesIndex);
-        
-        // Update results count
-        updateResultsCount(notesIndex.length);
+        updateStats(notesIndex);
         
     } catch (error) {
         console.error('Failed to initialize dashboard:', error);
-        showErrorState('Failed to load notes. Please try refreshing the page.');
+        showErrorState('Failed to load notes');
     }
 }
 
-// Check authentication
-function checkAuth() {
-    const session = sessionStorage.getItem('notesAppSession');
-    if (!session) return false;
-    
+// Load notes from local storage
+async function loadNotes() {
     try {
-        const sessionData = JSON.parse(session);
-        return sessionData.loggedIn && (Date.now() - sessionData.timestamp < 2 * 60 * 60 * 1000);
-    } catch (e) {
-        return false;
-    }
-}
-
-// Load search index
-async function loadSearchIndex() {
-    try {
-        const response = await fetch('search-index.json');
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+        // Try to load from local storage first (uploaded files)
+        const userNotes = JSON.parse(localStorage.getItem('userNotes') || '[]');
+        
+        // Also try to load from search-index.json for existing notes
+        let existingNotes = [];
+        try {
+            const response = await fetch('search-index.json');
+            if (response.ok) {
+                existingNotes = await response.json();
+            }
+        } catch (e) {
+            console.log('No existing search-index.json found');
         }
-        notesIndex = await response.json();
-        console.log(`Loaded ${notesIndex.length} notes from search index`);
+        
+        // Combine both note sources
+        notesIndex = [...existingNotes, ...userNotes];
+        console.log(`Loaded ${notesIndex.length} notes`);
+        
     } catch (error) {
-        console.error('Error loading search index:', error);
-        throw error;
+        console.error('Error loading notes:', error);
+        notesIndex = [];
     }
 }
 
-// Render notes list in grid view
+// Render notes list
 function renderNotesList(notes) {
     const container = document.getElementById('notesList');
     const noResults = document.getElementById('noResults');
     
-    if (!container) {
-        console.error('Notes list container not found');
-        return;
-    }
+    if (!container) return;
     
-    // Clear container
     container.innerHTML = '';
     
-    // Show no results message if empty
     if (notes.length === 0) {
         if (noResults) noResults.style.display = 'block';
         return;
@@ -85,7 +66,6 @@ function renderNotesList(notes) {
     
     if (noResults) noResults.style.display = 'none';
     
-    // Create notes grid
     notes.forEach(note => {
         const noteCard = createNoteCard(note);
         container.appendChild(noteCard);
@@ -112,8 +92,8 @@ function createNoteCard(note) {
                 </p>
                 
                 <div class="mt-auto pt-3">
-                    <button class="btn btn-outline-primary btn-sm w-100" onclick="loadNote('${escapeHtml(note.path)}')">
-                        Open Note
+                    <button class="btn btn-outline-primary btn-sm w-100" onclick="viewNote(${note.id ? `'${note.id}'` : `'${note.path}'`})">
+                        Read Note
                     </button>
                 </div>
             </div>
@@ -123,32 +103,46 @@ function createNoteCard(note) {
     return colDiv;
 }
 
-// Load and display a single note
-async function loadNote(notePath) {
-    console.log('Loading note:', notePath);
-    
+// View note content
+async function viewNote(noteIdOrPath) {
     try {
         showLoadingState();
         
-        const response = await fetch(notePath);
-        if (!response.ok) {
-            throw new Error(`Failed to load note: ${response.status}`);
+        let noteContent = '';
+        let noteTitle = '';
+        
+        // Check if it's a locally stored note (has ID)
+        if (typeof noteIdOrPath === 'string' && !noteIdOrPath.includes('/')) {
+            const userNotes = JSON.parse(localStorage.getItem('userNotes') || '[]');
+            const note = userNotes.find(n => n.id === noteIdOrPath);
+            if (note) {
+                noteContent = note.content;
+                noteTitle = note.title;
+            }
+        } else {
+            // It's a file path from search-index.json
+            const response = await fetch(noteIdOrPath);
+            if (response.ok) {
+                noteContent = await response.text();
+                noteTitle = noteIdOrPath.split('/').pop().replace('.md', '').replace(/-/g, ' ');
+            }
         }
         
-        const markdown = await response.text();
-        const html = markdownToHTML(markdown);
+        if (!noteContent) {
+            throw new Error('Note not found');
+        }
         
-        // Switch to detail view
-        showNoteDetail(html, notePath);
+        const html = markdownToHTML(noteContent);
+        showNoteDetail(html, noteTitle);
         
     } catch (error) {
         console.error('Error loading note:', error);
-        showErrorState('Failed to load the note. Please try again.');
+        showErrorState('Failed to load the note');
     }
 }
 
-// Show note in detail view
-function showNoteDetail(html, notePath) {
+// Show note in detail view (blog-style)
+function showNoteDetail(html, title) {
     const container = document.getElementById('notesList');
     if (!container) return;
     
@@ -156,64 +150,44 @@ function showNoteDetail(html, notePath) {
         <div class="col-12">
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Note Preview</h5>
+                    <h4 class="mb-0">${escapeHtml(title)}</h4>
                     <button class="btn btn-secondary btn-sm" onclick="backToList()">
-                        ← Back to List
+                        Back to List
                     </button>
                 </div>
                 <div class="card-body">
-                    <div class="markdown-content">
+                    <article class="markdown-content">
                         ${html}
-                    </div>
+                    </article>
                 </div>
             </div>
         </div>
     `;
-    
-    currentView = 'detail';
 }
 
-// Return to notes list
-function backToList() {
-    renderNotesList(notesIndex);
-    currentView = 'grid';
-    updateResultsCount(notesIndex.length);
+// Update statistics
+function updateStats(notes) {
+    document.getElementById('totalNotes').textContent = notes.length;
+    
+    const categories = [...new Set(notes.map(note => note.category))];
+    document.getElementById('totalCategories').textContent = categories.length;
+    
+    const currentMonth = new Date().toISOString().slice(0, 7);
+    const recentNotes = notes.filter(note => note.date && note.date.startsWith(currentMonth));
+    document.getElementById('recentNotes').textContent = recentNotes.length;
 }
 
-// Search/filter notes
-function filterResults() {
-    const query = document.getElementById('searchBox').value.toLowerCase().trim();
-    
-    if (!query) {
-        // Show all notes if search is empty
-        renderNotesList(notesIndex);
-        updateResultsCount(notesIndex.length);
-        return;
-    }
-    
-    const filteredNotes = notesIndex.filter(note => {
-        return (
-            (note.title && note.title.toLowerCase().includes(query)) ||
-            (note.category && note.category.toLowerCase().includes(query)) ||
-            (note.date && note.date.includes(query)) ||
-            (note.content && note.content.toLowerCase().includes(query)) ||
-            (note.preview && note.preview.toLowerCase().includes(query))
-        );
-    });
-    
-    renderNotesList(filteredNotes);
-    updateResultsCount(filteredNotes.length);
+// Utility functions (keep existing ones)
+function escapeHtml(unsafe) {
+    if (typeof unsafe !== 'string') return unsafe;
+    return unsafe
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
 }
 
-// Update results count display
-function updateResultsCount(count) {
-    const counter = document.getElementById('resultsCount');
-    if (counter) {
-        counter.textContent = `${count} note${count !== 1 ? 's' : ''} found`;
-    }
-}
-
-// Show loading state
 function showLoadingState() {
     const container = document.getElementById('notesList');
     if (container) {
@@ -226,7 +200,6 @@ function showLoadingState() {
     }
 }
 
-// Show error state
 function showErrorState(message) {
     const container = document.getElementById('notesList');
     if (container) {
@@ -241,37 +214,35 @@ function showErrorState(message) {
     }
 }
 
-// Utility function to escape HTML
-function escapeHtml(unsafe) {
-    if (typeof unsafe !== 'string') return unsafe;
-    return unsafe
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
+function backToList() {
+    renderNotesList(notesIndex);
+    updateStats(notesIndex);
 }
 
-// Logout function
+function filterResults() {
+    const query = document.getElementById('searchBox').value.toLowerCase().trim();
+    
+    if (!query) {
+        renderNotesList(notesIndex);
+        updateStats(notesIndex);
+        return;
+    }
+    
+    const filteredNotes = notesIndex.filter(note => {
+        return (
+            (note.title && note.title.toLowerCase().includes(query)) ||
+            (note.category && note.category.toLowerCase().includes(query)) ||
+            (note.date && note.date.includes(query)) ||
+            (note.content && note.content.toLowerCase().includes(query)) ||
+            (note.preview && note.preview.toLowerCase().includes(query))
+        );
+    });
+    
+    renderNotesList(filteredNotes);
+    updateStats(filteredNotes);
+}
+
 function logout() {
     sessionStorage.removeItem('notesAppSession');
     window.location.href = 'index.html';
 }
-// Add to dashboard.js - Statistics functions
-function updateStats(notes) {
-    // Total notes
-    document.getElementById('totalNotes').textContent = notes.length;
-    
-    // Unique categories
-    const categories = [...new Set(notes.map(note => note.category))];
-    document.getElementById('totalCategories').textContent = categories.length;
-    
-    // Recent notes (this month)
-    const currentMonth = new Date().toISOString().slice(0, 7);
-    const recentNotes = notes.filter(note => note.date && note.date.startsWith(currentMonth));
-    document.getElementById('recentNotes').textContent = recentNotes.length;
-}
-
-// Call this in initDashboard after loading notes
-// Add this line after renderNotesList(notesIndex);
-updateStats(notesIndex);
