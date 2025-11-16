@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Upload Note - Notes</title>
+    <title>Create Note - Notes</title>
         <link rel="icon" href="assets/logo/logo-n.png" type="image/x-icon" />
     <link rel="stylesheet" href="assets/css/styles.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -21,7 +21,7 @@
             
             <div class="navbar-nav" id="navbarNav">
                 <a href="dashboard.html" class="nav-link">Dashboard</a>
-                <a href="create.html" class="nav-link">Create</a>
+                <a href="upload.html" class="nav-link">Upload</a>
                 <a href="#" class="nav-link" onclick="logout()">Logout</a>
             </div>
         </div>
@@ -32,10 +32,17 @@
             <div class="col-12 col-md-10 col-lg-8">
                 <div class="card">
                     <div class="card-header">
-                        <h4 class="mb-0">Upload Markdown File</h4>
-                        <p class="text-muted mb-0 mt-2">Upload your notes from any device</p>
+                        <h4 class="mb-0">Create New Note</h4>
+                        <p class="text-muted mb-0 mt-2">Write your note in Markdown format</p>
                     </div>
                     <div class="card-body">
+                        <!-- Title Input -->
+                        <div class="form-group">
+                            <label for="noteTitle" class="form-label">Note Title</label>
+                            <input type="text" class="form-control" id="noteTitle" 
+                                   placeholder="Enter a title for your note..." required>
+                        </div>
+                        
                         <!-- Category Selection -->
                         <div class="form-group">
                             <label for="noteCategory" class="form-label">Category</label>
@@ -58,47 +65,31 @@
                             </div>
                         </div>
                         
-                        <!-- File Upload -->
+                        <!-- Markdown Editor -->
                         <div class="form-group">
-                            <label class="form-label">Upload Markdown File</label>
-                            <div class="file-upload-area" id="fileUploadArea">
-                                <div class="upload-icon">📁</div>
-                                <h5>Click to upload or drag and drop</h5>
-                                <p class="text-muted">.md files only</p>
-                                <input type="file" id="fileInput" class="file-input" accept=".md">
-                                <button type="button" class="btn btn-outline mt-2" onclick="document.getElementById('fileInput').click()">
-                                    Browse Files
-                                </button>
-                            </div>
-                            <div id="fileInfo" class="file-info" style="display: none;">
-                                <div class="d-flex align-items-center">
-                                    <div class="file-icon me-2">📄</div>
-                                    <div>
-                                        <strong id="fileName"></strong>
-                                        <br>
-                                        <small class="text-muted">Size: <span id="fileSize"></span></small>
-                                    </div>
-                                    <button type="button" class="btn-close ms-auto" onclick="clearFileSelection()">×</button>
+                            <label class="form-label">Note Content</label>
+                            <div class="markdown-editor">
+                                <div class="markdown-toolbar">
+                                    <button type="button" onclick="formatText('**', '**')" title="Bold">B</button>
+                                    <button type="button" onclick="formatText('*', '*')" title="Italic">I</button>
+                                    <button type="button" onclick="formatText('# ', '')" title="Heading">H</button>
+                                    <button type="button" onclick="formatText('- ', '')" title="List">•</button>
+                                    <button type="button" onclick="formatText('`', '`')" title="Code">`</button>
+                                    <button type="button" onclick="formatText('[', '](url)')" title="Link">🔗</button>
+                                </div>
+                                <div class="markdown-content">
+                                    <textarea id="markdownInput" class="markdown-input" placeholder="Write your note in Markdown format..."></textarea>
+                                    <div id="markdownPreview" class="markdown-preview"></div>
                                 </div>
                             </div>
                         </div>
                         
                         <!-- Actions -->
                         <div class="d-flex gap-2">
-                            <button type="button" id="uploadBtn" class="btn btn-primary flex-1" onclick="uploadFile()">
-                                Upload to GitHub
+                            <button type="button" id="createBtn" class="btn btn-primary flex-1" onclick="createNote()">
+                                Create Note
                             </button>
                             <a href="dashboard.html" class="btn btn-outline">Cancel</a>
-                        </div>
-                        
-                        <!-- Upload Tips -->
-                        <div class="mt-4 p-3 bg-secondary rounded">
-                            <h6 class="mb-2">📱 Mobile Upload Tips</h6>
-                            <ul class="small mb-0">
-                                <li>Use a file manager app to locate your .md files</li>
-                                <li>Make sure your files have the .md extension</li>
-                                <li>Large files may take longer to upload</li>
-                            </ul>
                         </div>
                     </div>
                 </div>
@@ -108,12 +99,44 @@
 
     <script src="assets/js/auth.js"></script>
     <script src="assets/js/config.js"></script>
-    <script src="assets/js/upload.js"></script>
+    <script src="assets/js/renderer.js"></script>
+    <script src="assets/js/create.js"></script>
     <script>
         // Mobile navbar toggle
         document.getElementById('navbarToggle').addEventListener('click', function() {
             document.getElementById('navbarNav').classList.toggle('open');
         });
+        
+        // Category selection handler
+        document.getElementById('noteCategory').addEventListener('change', function() {
+            const customCategoryDiv = document.getElementById('customCategory');
+            if (this.value === 'other') {
+                customCategoryDiv.style.display = 'block';
+            } else {
+                customCategoryDiv.style.display = 'none';
+            }
+        });
+        
+        // Markdown preview
+        document.getElementById('markdownInput').addEventListener('input', function() {
+            document.getElementById('markdownPreview').innerHTML = markdownToHTML(this.value);
+        });
+        
+        // Text formatting helper
+        function formatText(before, after) {
+            const textarea = document.getElementById('markdownInput');
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            const selectedText = textarea.value.substring(start, end);
+            const newText = before + selectedText + after;
+            
+            textarea.value = textarea.value.substring(0, start) + newText + textarea.value.substring(end);
+            textarea.focus();
+            textarea.setSelectionRange(start + before.length, end + before.length);
+            
+            // Update preview
+            document.getElementById('markdownPreview').innerHTML = markdownToHTML(textarea.value);
+        }
     </script>
 </body>
 </html>
