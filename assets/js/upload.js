@@ -224,11 +224,11 @@ async function uploadFile() {
         const result = await response.json();
         
         if (result.success) {
-            showAlert('✅ Note uploaded to GitHub successfully!', 'success');
+            showAlert('✅ Note uploaded successfully!', 'success');
             // Reset form
             clearFileSelection();
             categorySelect.value = '';
-            document.getElementById('customCategoryInput').value = '';
+            if (customCategoryInput) customCategoryInput.value = '';
             document.getElementById('customCategory').style.display = 'none';
             
             setTimeout(() => {
@@ -260,16 +260,14 @@ async function uploadFile() {
 // Alert system
 function showAlert(message, type = 'info') {
     // Remove any existing alerts
-    const existingAlerts = document.querySelectorAll('.custom-alert');
+    const existingAlerts = document.querySelectorAll('.alert');
     existingAlerts.forEach(alert => alert.remove());
     
     const alertDiv = document.createElement('div');
-    alertDiv.className = `custom-alert alert-${type}`;
+    alertDiv.className = `alert alert-${type}`;
     alertDiv.innerHTML = `
-        <div class="alert-content">
-            <span class="alert-message">${message}</span>
-            <button class="alert-close" onclick="this.parentElement.parentElement.remove()">×</button>
-        </div>
+        <span class="alert-message">${message}</span>
+        <button class="alert-close" onclick="this.parentElement.remove()">×</button>
     `;
     
     document.body.appendChild(alertDiv);

@@ -1,4 +1,3 @@
-
 // Client-side configuration
 const CONFIG = {
     IS_PRODUCTION: true,
