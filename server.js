@@ -268,6 +268,22 @@ app.post('/api/upload-note', async (req, res) => {
             });
         }
 
+        // Validate filename
+        if (!/^[a-zA-Z0-9\s\-_.]+\.md$/.test(fileName)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid filename. Only letters, numbers, spaces, hyphens, underscores, and periods are allowed.'
+            });
+        }
+
+        // Validate category
+        if (!/^[a-zA-Z0-9\s\-_]+$/.test(category)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid category name. Only letters, numbers, spaces, hyphens, and underscores are allowed.'
+            });
+        }
+
         const result = await githubService.commitFile(
             fileName.endsWith('.md') ? fileName : fileName + '.md',
             content,
