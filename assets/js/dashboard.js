@@ -1,5 +1,5 @@
 /**
- * Enhanced dashboard with GitHub integration
+ * Enhanced dashboard with GitHub integration - Fixed Notes Loading
  */
 
 let notesIndex = [];
@@ -16,13 +16,7 @@ async function initDashboard() {
         showLoadingState();
         await loadNotes();
         
-        console.log('Notes loaded:', notesIndex);
-        
-        if (notesIndex.length === 0) {
-            console.log('No notes found - showing empty state');
-            // Add sample notes if no notes exist
-            addSampleNotes();
-        }
+        console.log('Notes loaded:', notesIndex.length, 'notes');
         
         renderNotesList(notesIndex);
         updateStats(notesIndex);
@@ -34,48 +28,69 @@ async function initDashboard() {
     }
 }
 
-// Enhanced notes loading with better debugging
+// Enhanced notes loading that works with your GitHub structure
 async function loadNotes() {
     try {
         console.log('🔄 Loading notes from server...');
         
-        // Try to load from server first (GitHub + local)
         const response = await fetch('/api/notes');
         console.log('API Response status:', response.status);
         
         if (response.ok) {
             const data = await response.json();
-            console.log('API Response data:', data);
+            console.log('API Response success:', data.success);
+            console.log('Notes count:', data.notes ? data.notes.length : 0);
             
             if (data.success && data.notes) {
                 notesIndex = data.notes;
                 allNotes = [...data.notes];
                 console.log(`✅ Loaded ${notesIndex.length} notes from server`);
-                console.log('Notes details:', notesIndex.map(n => ({ title: n.title, category: n.category, id: n.id })));
                 return;
-            } else {
-                console.log('❌ API returned unsuccessful:', data);
             }
-        } else {
-            console.log('❌ API request failed:', response.status, response.statusText);
         }
         
-        // If we get here, server load failed
         throw new Error('Server load failed');
         
     } catch (error) {
         console.error('Error loading notes from server:', error);
+        // Fallback to empty array
+        notesIndex = [];
+        allNotes = [];
+    }
+}
+
+
+// Direct GitHub notes loading as fallback
+async function loadNotesFromGitHub() {
+    try {
+        console.log('🔄 Loading notes directly from GitHub...');
         
-        // Fallback to local storage only
+        const response = await fetch('/api/github-notes');
+        if (response.ok) {
+            const data = await response.json();
+            if (data.success && data.notes) {
+                notesIndex = data.notes;
+                allNotes = [...data.notes];
+                console.log(`✅ Loaded ${notesIndex.length} notes from GitHub`);
+                return;
+            }
+        }
+        
+        // Final fallback: local storage
         const userNotes = JSON.parse(localStorage.getItem('userNotes') || '[]');
         notesIndex = userNotes;
         allNotes = [...userNotes];
-        console.log(`📱 Loaded ${notesIndex.length} notes from local storage as fallback`);
+        console.log(`📱 Loaded ${notesIndex.length} notes from local storage`);
+        
+    } catch (error) {
+        console.error('GitHub direct load failed:', error);
+        const userNotes = JSON.parse(localStorage.getItem('userNotes') || '[]');
+        notesIndex = userNotes;
+        allNotes = [...userNotes];
     }
 }
 
 function updateStats(notes) {
-    // Only update elements that exist
     const totalNotesElem = document.getElementById('totalNotesMini');
     const totalCategoriesElem = document.getElementById('totalCategoriesMini');
     const recentNotesElem = document.getElementById('recentNotesMini');
@@ -135,14 +150,12 @@ function renderNotesList(notes) {
     notes.sort((a, b) => new Date(b.lastModified || b.date) - new Date(a.lastModified || a.date));
     
     notesList.innerHTML = notes.map(note => {
-        // Handle both GitHub and local notes
-        const noteUrl = note.url || '#';
         const noteId = note.id || note.sha || 'unknown';
         const noteTitle = note.title || 'Untitled Note';
         const noteCategory = note.category || 'uncategorized';
         const noteDate = formatDate(note.lastModified || note.date);
         const notePreview = note.preview || (note.content ? note.content.substring(0, 150) + '...' : 'No preview available');
-        const isLocalNote = noteUrl === '#local' || noteId.startsWith('local-');
+        const noteUrl = note.url || note.html_url || '#';
         
         return `
         <div class="note-card" onclick="viewNote('${noteId}')">
@@ -164,9 +177,9 @@ function renderNotesList(notes) {
                 <div class="note-preview">${notePreview}</div>
             </div>
             <div class="note-actions">
-                ${!isLocalNote && noteUrl !== '#' ? `
+                ${noteUrl && noteUrl !== '#' && noteUrl !== '#local' ? `
                 <a href="${noteUrl}" target="_blank" class="note-action" onclick="event.stopPropagation()">
-                    <span>${noteUrl.includes('github.com') ? 'View on GitHub' : 'View Note'}</span>
+                    <span>View on GitHub</span>
                 </a>
                 ` : `
                 <button class="note-action" onclick="event.stopPropagation(); viewNote('${noteId}')">
@@ -184,21 +197,16 @@ function renderNotesList(notes) {
 
 function formatDate(dateString) {
     try {
-        // Handle various date formats
         let date;
         
         if (dateString.includes('T')) {
-            // ISO format (2023-12-25T10:30:00Z)
             date = new Date(dateString);
         } else if (dateString.match(/^\d{4}-\d{2}-\d{2}$/)) {
-            // YYYY-MM-DD format
             date = new Date(dateString + 'T12:00:00Z');
         } else {
-            // Fallback to current date
             date = new Date();
         }
         
-        // Check if date is valid
         if (isNaN(date.getTime())) {
             return 'Recent';
         }
@@ -209,11 +217,9 @@ function formatDate(dateString) {
             day: 'numeric' 
         });
     } catch (e) {
-        console.log('Date formatting error for:', dateString, e);
         return 'Recent';
     }
 }
-
 
 function filterResults() {
     const searchBox = document.getElementById('searchBox');
@@ -241,7 +247,6 @@ function viewNote(noteId) {
     if (note && note.url && note.url !== '#' && note.url !== '#local') {
         window.open(note.url, '_blank');
     } else if (note && note.content) {
-        // Show local note in a modal
         showNoteModal(note);
     } else {
         alert('Note content not available');
@@ -303,12 +308,6 @@ function closeNoteModal() {
     }
 }
 
-function viewOnGitHub(url) {
-    if (url && url !== '#' && url !== '#local') {
-        window.open(url, '_blank');
-    }
-}
-
 function shareNote(noteId) {
     const note = allNotes.find(n => n.id === noteId);
     if (note && navigator.share) {
@@ -318,7 +317,6 @@ function shareNote(noteId) {
             url: note.url || window.location.href
         });
     } else if (note) {
-        // Fallback: copy to clipboard
         const noteText = `${note.title}\n\n${note.preview}\n\n${note.url || 'Local note'}`;
         navigator.clipboard.writeText(noteText);
         showAlert('Note info copied to clipboard!');
@@ -388,52 +386,7 @@ function exportNotes() {
     showAlert('Notes exported successfully!');
 }
 
-// Add sample notes for testing
-function addSampleNotes() {
-    const sampleNotes = [
-        {
-            id: 'sample-1',
-            title: 'Welcome to Notes',
-            category: 'general',
-            content: '# Welcome to Notes App\n\nThis is a sample note to get you started.\n\n## Features:\n- Upload markdown files\n- Create notes directly\n- GitHub integration\n- Dark mode',
-            date: new Date().toISOString(),
-            preview: 'Welcome to Notes App - This is a sample note to get you started...',
-            url: '#local',
-            lastModified: new Date().toISOString()
-        },
-        {
-            id: 'sample-2',
-            title: 'Markdown Tips',
-            category: 'tips',
-            content: '# Markdown Tips\n\nUse **bold** and *italic* text.\n\n- Lists are easy\n- Just use dashes\n\n`Code` looks like this.',
-            date: new Date().toISOString(),
-            preview: 'Markdown Tips - Use bold and italic text. Lists are easy...',
-            url: '#local',
-            lastModified: new Date().toISOString()
-        }
-    ];
-    
-    // Save to local storage
-    localStorage.setItem('userNotes', JSON.stringify(sampleNotes));
-    
-    // Also save to server local file
-    fetch('/api/upload-note', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            fileName: 'welcome.md',
-            content: sampleNotes[0].content,
-            category: 'general',
-            message: 'Add welcome note'
-        })
-    });
-    
-    console.log('✅ Added sample notes');
-    // Refresh the dashboard
-    initDashboard();
-}
-
-// Debug functions for browser console
+// Debug functions
 window.debugNotes = {
     showAllNotes: () => console.log('All notes:', allNotes),
     showNotesIndex: () => console.log('Notes index:', notesIndex),
@@ -442,5 +395,12 @@ window.debugNotes = {
     testAPI: () => fetch('/api/notes').then(r => r.json()).then(console.log)
 };
 
-// Initialize on page load
-document.addEventListener('DOMContentLoaded', initDashboard);
+// Add search functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const searchBox = document.getElementById('searchBox');
+    if (searchBox) {
+        searchBox.addEventListener('input', filterResults);
+    }
+    
+    initDashboard();
+});
