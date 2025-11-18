@@ -1,119 +1,120 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Upload Note - Notes</title>
-        <link rel="icon" href="assets/logo/logo-n.png" type="image/x-icon" />
-    <link rel="stylesheet" href="assets/css/styles.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-</head>
-<body class="main-container">
-    <!-- Navigation -->
-    <nav class="navbar">
-        <div class="navbar-container">
-            <a class="navbar-brand" href="dashboard.html">
-            </a>
-            
-            <button class="navbar-toggle" id="navbarToggle">☰</button>
-            
-            <div class="navbar-nav" id="navbarNav">
-                <a href="dashboard.html" class="nav-link">Dashboard</a>
-                <a href="create.html" class="nav-link">Create</a>
-                <a href="#" class="nav-link" onclick="logout()">Logout</a>
-            </div>
+<html lang="en"> 
+    <head> 
+        <meta charset="UTF-8"> 
+        <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+        <title>Upload Note - Notes</title> 
+        <link rel="icon" href="assets/logo/logo-n.png" type="image/x-icon" /> 
+        <link rel="stylesheet" href="assets/css/styles.css"> <link rel="preconnect" href="https://fonts.googleapis.com"> 
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin> <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"> 
+    </head> 
+    <body class="main-container"> 
+        <!-- Navigation --> 
+         <nav class="navbar"> 
+            <div class="navbar-container"> 
+                <a class="navbar-brand" href="dashboard.html">Notes</a>
+        <button class="navbar-toggle" id="navbarToggle">☰</button>
+        
+        <div class="navbar-nav" id="navbarNav">
+            <a href="dashboard.html" class="nav-link">Dashboard</a>
+            <a href="create.html" class="nav-link">Create</a>
+            <a href="#" class="nav-link" onclick="logout()">Logout</a>
         </div>
-    </nav>
+    </div>
+</nav>
 
-    <main class="content-area">
-        <div class="row justify-content-center">
-            <div class="col-12 col-md-10 col-lg-8">
-                <div class="card">
-                    <div class="card-header">
-                        <h4 class="mb-0">Upload Markdown File</h4>
-                        <p class="text-muted mb-0 mt-2">Upload your notes from any device</p>
+<main class="content-area">
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-10 col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">Upload Markdown File</h4>
+                    <p class="text-muted mb-0 mt-2">Upload your notes from any device</p>
+                </div>
+                <div class="card-body">
+                    <!-- Category Selection -->
+                    <div class="form-group">
+                        <label for="noteCategory" class="form-label">Category</label>
+                        <select class="form-select" id="noteCategory" required>
+                            <option value="">Select category</option>
+                            <option value="programming">Programming</option>
+                            <option value="personal">Personal</option>
+                            <option value="work">Work</option>
+                            <option value="study">Study</option>
+                            <option value="ideas">Ideas</option>
+                            <option value="other">Other (custom)</option>
+                        </select>
+                        
+                        <div id="customCategory" class="mt-2" style="display: none;">
+                            <label for="customCategoryInput" class="form-label">Custom Category Name</label>
+                            <input type="text" class="form-control" id="customCategoryInput" 
+                                   placeholder="Enter your custom category name..."
+                                   required>
+                            <div class="form-text">This will create a new category folder</div>
+                        </div>
                     </div>
-                    <div class="card-body">
-                        <!-- Category Selection -->
-                        <div class="form-group">
-                            <label for="noteCategory" class="form-label">Category</label>
-                            <select class="form-select" id="noteCategory" required>
-                                <option value="">Select category</option>
-                                <option value="programming">Programming</option>
-                                <option value="personal">Personal</option>
-                                <option value="work">Work</option>
-                                <option value="study">Study</option>
-                                <option value="ideas">Ideas</option>
-                                <option value="other">Other (custom)</option>
-                            </select>
-                            
-                            <div id="customCategory" class="mt-2" style="display: none;">
-                                <label for="customCategoryInput" class="form-label">Custom Category Name</label>
-                                <input type="text" class="form-control" id="customCategoryInput" 
-                                       placeholder="Enter your custom category name..."
-                                       required>
-                                <div class="form-text">This will create a new category folder in GitHub</div>
-                            </div>
+                    
+                    <!-- File Upload -->
+                    <div class="form-group">
+                        <label class="form-label">Upload Markdown File</label>
+                        
+                        <div class="file-upload-area" id="uploadArea">
+                            <input type="file" id="fileInput" class="file-input" accept=".md,.markdown">
+                            <div class="upload-icon">📁</div>
+                            <h5>Click to select a file</h5>
+                            <p class="text-muted">.md files only</p>
                         </div>
                         
-                        <!-- File Upload -->
-                        <div class="form-group">
-                            <label class="form-label">Upload Markdown File</label>
-                            <div class="file-upload-area" id="fileUploadArea">
-                                <div class="upload-icon">📁</div>
-                                <h5>Click to upload or drag and drop</h5>
-                                <p class="text-muted">.md files only</p>
-                                <input type="file" id="fileInput" class="file-input" accept=".md">
-                                <button type="button" class="btn btn-outline mt-2" onclick="document.getElementById('fileInput').click()">
-                                    Browse Files
-                                </button>
-                            </div>
-                            <div id="fileInfo" class="file-info" style="display: none;">
-                                <div class="d-flex align-items-center">
-                                    <div class="file-icon me-2">📄</div>
-                                    <div>
-                                        <strong id="fileName"></strong>
-                                        <br>
-                                        <small class="text-muted">Size: <span id="fileSize"></span></small>
-                                    </div>
-                                    <button type="button" class="btn-close ms-auto" onclick="clearFileSelection()">×</button>
+                        <div id="fileInfo" class="file-info" style="display: none;">
+                            <div class="d-flex align-items-center">
+                                <div class="file-icon me-2">📄</div>
+                                <div>
+                                    <strong id="fileName"></strong>
+                                    <br>
+                                    <small class="text-muted">Size: <span id="fileSize"></span></small>
                                 </div>
+                                <button type="button" class="btn-close ms-auto" onclick="clearFileSelection()">×</button>
                             </div>
                         </div>
-                        
-                        <!-- Actions -->
-                        <div class="d-flex gap-2">
-                            <button type="button" id="uploadBtn" class="btn btn-primary flex-1" onclick="uploadFile()">
-                                Upload to GitHub
-                            </button>
-                            <a href="dashboard.html" class="btn btn-outline">Cancel</a>
-                        </div>
-                        
-                        <!-- Upload Tips -->
-                        <div class="mt-4 p-3 bg-secondary rounded">
-                            <h6 class="mb-2">📱 Mobile Upload Tips</h6>
-                            <ul class="small mb-0">
-                                <li>Use a file manager app to locate your .md files</li>
-                                <li>Make sure your files have the .md extension</li>
-                                <li>Large files may take longer to upload</li>
-                            </ul>
-                        </div>
+                    </div>
+                    
+                    <!-- Actions -->
+                    <div class="d-flex gap-2">
+                        <button type="button" id="uploadBtn" class="btn btn-primary flex-1" onclick="uploadFile()">
+                            Upload Note
+                        </button>
+                        <a href="dashboard.html" class="btn btn-outline">Cancel</a>
                     </div>
                 </div>
             </div>
         </div>
-    </main>
+    </div>
+</main>
 
-    <script src="assets/js/auth.js"></script>
-    <script src="assets/js/config.js"></script>
-    <script src="assets/js/upload.js"></script>
-    <script>
-        // Mobile navbar toggle
-        document.getElementById('navbarToggle').addEventListener('click', function() {
-            document.getElementById('navbarNav').classList.toggle('open');
-        });
-    </script>
-</body>
-</html>
+<script src="assets/js/auth.js"></script>
+<script src="assets/js/upload.js"></script>
+<script>
+    // Mobile navbar toggle
+    document.getElementById('navbarToggle').addEventListener('click', function() {
+        document.getElementById('navbarNav').classList.toggle('open');
+    });
+    
+    // Category selection handler
+    document.getElementById('noteCategory').addEventListener('change', function() {
+        const customCategoryDiv = document.getElementById('customCategory');
+        if (this.value === 'other') {
+            customCategoryDiv.style.display = 'block';
+        } else {
+            customCategoryDiv.style.display = 'none';
+        }
+    });
+    
+    // Initialize upload functionality
+    // document.addEventListener('DOMContentLoaded', function() {
+    //     if (typeof initUpload === 'function') {
+    //         initUpload();
+    //     }
+    // });
+</script>
+</body> 
+</html> 
