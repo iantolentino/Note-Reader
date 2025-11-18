@@ -28,16 +28,19 @@ function setupFileUpload() {
     }
     
     // Make file input accessible
-    fileInput.style.position = 'absolute';
-    fileInput.style.width = '100%';
-    fileInput.style.height = '100%';
-    fileInput.style.opacity = '0';
-    fileInput.style.cursor = 'pointer';
+    // fileInput.style.position = 'absolute';
+    // fileInput.style.width = '100%';
+    // fileInput.style.height = '100%';
+    // fileInput.style.opacity = '0';
+    // fileInput.style.cursor = 'pointer';
+
+    fileInput.style.display = 'none';
     
     // Click handler for upload area
     uploadArea.addEventListener('click', function(e) {
-        // Don't trigger if clicking on close button
-        if (!e.target.classList.contains('btn-close')) {
+        // Don't trigger if clicking on close button or file info
+        if (!e.target.classList.contains('btn-close') && 
+            !e.target.closest('#fileInfo')) {
             fileInput.click();
         }
     });

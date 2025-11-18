@@ -169,7 +169,6 @@ function renderNotesList(notes) {
                             <div class="note-author">${noteTitle}</div>
                             <div class="note-category">${noteCategory}</div>
                         </div>
-                        <div class="note-date">${noteDate}</div>
                     </div>
                 </div>
             </div>
