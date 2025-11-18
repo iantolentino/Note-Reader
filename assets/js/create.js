@@ -85,7 +85,15 @@ async function createNote() {
         createBtn.disabled = true;
         
         const content = contentInput.value;
-        const fileName = `${titleInput.value.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.md`;
+        
+        // FIXED: Better filename sanitization for mobile
+        const title = titleInput.value.trim();
+        const sanitizedTitle = title
+            .replace(/[^a-zA-Z0-9\s\-_]/g, '') // Remove special characters except spaces, hyphens, underscores
+            .replace(/\s+/g, '_') // Replace spaces with underscores
+            .substring(0, 100); // Limit length
+        
+        const fileName = `${sanitizedTitle || 'note'}.md`;
         
         console.log('Creating note:', fileName, 'Category:', category);
         
@@ -94,7 +102,7 @@ async function createNote() {
             fileName: fileName,
             content: content,
             category: category,
-            message: `Create note: ${titleInput.value} in ${category}`
+            message: `Create note: ${title} in ${category}`
         };
         
         const response = await fetch('/api/upload-note', {
@@ -121,14 +129,7 @@ async function createNote() {
                 window.location.href = 'dashboard.html';
             }, 2000);
         } else {
-            // Better error messages
-            let errorMsg = result.message || 'Creation failed';
-            if (errorMsg.includes('Bad credentials')) {
-                errorMsg = 'GitHub authentication failed. Check your token in the .env file.';
-            } else if (errorMsg.includes('Not Found')) {
-                errorMsg = 'Repository not found. Check GITHUB_OWNER and GITHUB_REPO in .env.';
-            }
-            throw new Error(errorMsg);
+            throw new Error(result.message || 'Creation failed');
         }
         
     } catch (error) {

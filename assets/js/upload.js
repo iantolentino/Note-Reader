@@ -171,11 +171,19 @@ async function uploadFile() {
         const content = await readFileContent(selectedFile);
         console.log('File content read, length:', content.length);
         
+        // FIXED: Better filename handling for mobile
+        const originalFileName = selectedFile.name;
+        const sanitizedFileName = originalFileName
+            .replace(/[^a-zA-Z0-9\s\-_.]/g, '') // Remove special characters except allowed ones
+            .replace(/\s+/g, '_'); // Replace spaces with underscores
+        
+        const fileName = sanitizedFileName || 'uploaded_note.md';
+        
         const uploadData = {
-            fileName: selectedFile.name,
+            fileName: fileName,
             content: content,
             category: category,
-            message: `Add note: ${selectedFile.name} in ${category}`
+            message: `Add note: ${originalFileName} in ${category}`
         };
         
         console.log('Sending upload request...');
