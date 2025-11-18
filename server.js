@@ -24,7 +24,7 @@ class GitHubService {
     constructor() {
         this.token = process.env.GITHUB_TOKEN;
         this.owner = process.env.GITHUB_OWNER || 'iantolentino';
-        this.repo = process.env.GITHUB_REPO || 'Notes-Reader';
+        this.repo = process.env.GITHUB_REPO || 'Note-Reader';
         this.branch = process.env.GITHUB_BRANCH || 'main';
         this.baseURL = 'https://api.github.com';
     }
@@ -108,16 +108,17 @@ class GitHubService {
         }
     }
 
-    async getFiles() {
+    async getContents(path = '') {
         try {
-            // If no GitHub token, return empty array for local testing
+            // If no GitHub token, return local notes
             if (!this.token) {
-                console.log('📝 Local mode: No GitHub token, returning empty files');
-                return [];
+                console.log('📝 Local mode: Returning local notes');
+                return this.getLocalNotesForAPI();
             }
 
+            console.log(`🔗 Fetching GitHub contents: ${path}`);
             const response = await axios.get(
-                `${this.baseURL}/repos/${this.owner}/${this.repo}/contents/notes?ref=${this.branch}`,
+                `${this.baseURL}/repos/${this.owner}/${this.repo}/contents/${path}?ref=${this.branch}`,
                 {
                     headers: {
                         'Authorization': `token ${this.token}`,
@@ -126,27 +127,81 @@ class GitHubService {
                 }
             );
 
+            console.log(`✅ GitHub API success for path: ${path}, items: ${Array.isArray(response.data) ? response.data.length : 'single'}`);
             return response.data;
         } catch (error) {
-            console.error('Error fetching files:', error.response?.data || error.message);
+            console.error('Error fetching contents from GitHub:', error.response?.data || error.message);
+            
+            // If GitHub fails, return local notes for root notes path
+            if (path === 'notes') {
+                return this.getLocalNotesForAPI();
+            }
             return [];
         }
     }
-
     async getFileContent(downloadUrl) {
         try {
+            // Handle local notes
+            if (downloadUrl === '#local') {
+                return 'Local note content';
+            }
+            
             const response = await axios.get(downloadUrl);
             return response.data;
         } catch (error) {
             console.error('Error fetching file content:', error);
-            throw error;
+            return 'Content not available';
         }
     }
 
+    async getFilePreview(downloadUrl) {
+        try {
+            const content = await this.getFileContent(downloadUrl);
+            return content.substring(0, 150) + '...';
+        } catch (error) {
+            return 'Preview not available';
+        }
+    }
+
+    // For API responses - returns notes in the format expected by frontend
+    getLocalNotesForAPI() {
+        try {
+            if (fs.existsSync('local-notes.json')) {
+                const notes = JSON.parse(fs.readFileSync('local-notes.json', 'utf8'));
+                return notes;
+            }
+        } catch (error) {
+            console.error('Error reading local notes:', error);
+        }
+        return [];
+    }
+
+    // For directory structure - used in getContents
     getLocalNotes() {
         try {
             if (fs.existsSync('local-notes.json')) {
-                return JSON.parse(fs.readFileSync('local-notes.json', 'utf8'));
+                const notes = JSON.parse(fs.readFileSync('local-notes.json', 'utf8'));
+                // Group by category for directory structure
+                const categories = {};
+                notes.forEach(note => {
+                    if (!categories[note.category]) {
+                        categories[note.category] = [];
+                    }
+                    categories[note.category].push({
+                        type: 'file',
+                        name: note.title + '.md',
+                        download_url: '#local',
+                        html_url: '#local',
+                        sha: note.id,
+                        content: note.content
+                    });
+                });
+
+                return Object.keys(categories).map(categoryName => ({
+                    type: 'dir',
+                    name: categoryName,
+                    notes: categories[categoryName]
+                }));
             }
         } catch (error) {
             console.error('Error reading local notes:', error);
@@ -193,6 +248,15 @@ app.get('/api/github-token', (req, res) => {
     });
 });
 
+app.get('/api/github-notes', async (req, res) => {
+    try {
+        const notes = await getNotesFromGitHub();
+        res.json({ success: true, notes: notes });
+    } catch (error) {
+        res.json({ success: false, error: error.message });
+    }
+});
+
 app.post('/api/upload-note', async (req, res) => {
     try {
         const { fileName, content, category, message } = req.body;
@@ -228,123 +292,108 @@ app.post('/api/upload-note', async (req, res) => {
 
 app.get('/api/notes', async (req, res) => {
     try {
-        let notes = [];
-        
-        console.log('📝 Fetching notes...');
-        
-        // Try to get notes from GitHub first
-        if (process.env.GITHUB_TOKEN) {
-            try {
-                const files = await githubService.getFiles();
-                console.log('GitHub API response received');
-                
-                if (Array.isArray(files)) {
-                    for (const item of files) {
-                        if (item.type === 'dir' && item.name !== '.github') { // Skip .github directory
-                            console.log(`Processing category: ${item.name}`);
-                            
-                            try {
-                                // Get files in this category
-                                const categoryResponse = await axios.get(item.url, {
-                                    headers: {
-                                        'Authorization': `token ${process.env.GITHUB_TOKEN}`,
-                                        'Accept': 'application/vnd.github.v3+json'
-                                    }
-                                });
-                                
-                                const categoryFiles = categoryResponse.data;
-                                
-                                for (const file of categoryFiles) {
-                                    if (file.type === 'file' && file.name.endsWith('.md') && file.name !== 'README.md') {
-                                        console.log(`Found markdown file: ${file.name}`);
-                                        
-                                        try {
-                                            const content = await githubService.getFileContent(file.download_url);
-                                            
-                                            // FIXED: Better date handling
-                                            let noteDate;
-                                            try {
-                                                // Try to extract date from filename (format: YYYY-MM-DD-filename.md)
-                                                const dateMatch = file.name.match(/^(\d{4}-\d{2}-\d{2})-/);
-                                                if (dateMatch) {
-                                                    noteDate = dateMatch[1];
-                                                } else {
-                                                    // Use GitHub's last modified date
-                                                    noteDate = new Date().toISOString().split('T')[0];
-                                                }
-                                            } catch (dateError) {
-                                                noteDate = new Date().toISOString().split('T')[0];
-                                            }
-                                            
-                                            const note = {
-                                                id: file.sha,
-                                                title: file.name.replace('.md', '')
-                                                              .replace(/^\d{4}-\d{2}-\d{2}-/, '') // Remove date prefix
-                                                              .replace(/[-_]/g, ' ')
-                                                              .replace(/\b\w/g, l => l.toUpperCase()), // Capitalize words
-                                                category: item.name,
-                                                path: file.path,
-                                                date: noteDate,
-                                                content: content,
-                                                preview: content.substring(0, 150).replace(/[#*`\[\]]/g, '') + '...',
-                                                url: file.html_url,
-                                                sha: file.sha,
-                                                lastModified: file.last_modified || noteDate
-                                            };
-                                            
-                                            notes.push(note);
-                                            console.log(`✅ Added GitHub note: ${file.name}`);
-                                        } catch (contentError) {
-                                            console.error(`Error getting content for ${file.name}:`, contentError.message);
-                                        }
-                                    }
-                                }
-                            } catch (categoryError) {
-                                console.error(`Error fetching category ${item.name}:`, categoryError.message);
-                            }
-                        }
-                    }
-                }
-                
-                console.log(`✅ Loaded ${notes.length} notes from GitHub`);
-            } catch (githubError) {
-                console.error('GitHub API error:', githubError.message);
-            }
-        }
-        
-        // Always include local notes
-        const localNotes = githubService.getLocalNotes();
-        console.log(`📁 Found ${localNotes.length} local notes`);
-        
-        // Merge notes, avoiding duplicates by ID
-        const allNotesMap = new Map();
-        
-        // Add GitHub notes first
-        notes.forEach(note => allNotesMap.set(note.id, note));
-        
-        // Add local notes (will overwrite if same ID, but local IDs are different)
-        localNotes.forEach(note => allNotesMap.set(note.id, note));
-        
-        notes = Array.from(allNotesMap.values());
-        
-        console.log(`🎯 Total notes to return: ${notes.length}`);
-        
-        res.json({
-            success: true,
-            notes: notes,
-            source: process.env.GITHUB_TOKEN ? 'github' : 'local'
-        });
-        
+        const notes = await getNotesFromGitHub();
+        res.json({ success: true, notes: notes });
     } catch (error) {
         console.error('Error fetching notes:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Failed to fetch notes',
-            notes: []
-        });
+        res.json({ success: false, error: error.message, notes: [] });
     }
 });
 
+// Helper function to get notes from GitHub
+// Helper function to get notes from GitHub - FIXED VERSION
+async function getNotesFromGitHub() {
+    const notes = [];
+    
+    try {
+        // Get all categories (folders in notes/)
+        const categories = await githubService.getContents('notes');
+        
+        console.log('📁 Categories found:', categories ? categories.length : 0);
+        
+        // If categories is already an array of notes (local mode) or empty
+        if (Array.isArray(categories) && categories.length > 0 && categories[0].id) {
+            console.log('📝 Returning local notes format');
+            return categories;
+        }
+        
+        // If no categories found or it's empty, try local notes
+        if (!categories || categories.length === 0) {
+            console.log('📝 No categories found, using local notes');
+            const localNotes = githubService.getLocalNotesForAPI();
+            return Array.isArray(localNotes) ? localNotes : [];
+        }
+        
+        // GitHub directory structure - process each category
+        for (const category of categories) {
+            // Skip if it's not a directory or doesn't have a name
+            if (category.type !== 'dir' || !category.name) {
+                console.log('Skipping non-directory:', category);
+                continue;
+            }
+            
+            console.log(`📂 Processing category: ${category.name}`);
+            
+            try {
+                // Get all files in this category
+                const files = await githubService.getContents(`notes/${category.name}`);
+                
+                if (!files || !Array.isArray(files)) {
+                    console.log(`No files found in category ${category.name}`);
+                    continue;
+                }
+                
+                console.log(`📄 Found ${files.length} files in ${category.name}`);
+                
+                for (const file of files) {
+                    // Check if it's a markdown file
+                    if (file.type === 'file' && file.name && file.name.endsWith('.md')) {
+                        console.log(`📝 Processing file: ${file.name}`);
+                        
+                        try {
+                            const noteContent = await githubService.getFileContent(file.download_url);
+                            const notePreview = noteContent.substring(0, 150) + (noteContent.length > 150 ? '...' : '');
+                            
+                            notes.push({
+                                id: file.sha || file.name,
+                                title: file.name.replace('.md', ''),
+                                category: category.name,
+                                content: noteContent,
+                                preview: notePreview,
+                                url: file.html_url || `https://github.com/${githubService.owner}/${githubService.repo}/blob/${githubService.branch}/notes/${category.name}/${file.name}`,
+                                lastModified: file.last_modified || new Date().toISOString()
+                            });
+                            
+                            console.log(`✅ Added note: ${file.name}`);
+                        } catch (fileError) {
+                            console.error(`Error processing file ${file.name}:`, fileError);
+                        }
+                    }
+                }
+            } catch (categoryError) {
+                console.error(`Error accessing category ${category.name}:`, categoryError);
+                continue;
+            }
+        }
+        
+        console.log(`📝 Total notes found: ${notes.length}`);
+        
+        // If no notes found in GitHub, try local notes
+        if (notes.length === 0) {
+            const localNotes = githubService.getLocalNotesForAPI();
+            console.log(`📝 Fallback to ${localNotes.length} local notes`);
+            return Array.isArray(localNotes) ? localNotes : [];
+        }
+        
+        return notes;
+    } catch (error) {
+        console.error('Error in getNotesFromGitHub:', error);
+        // Return local notes as fallback
+        const localNotes = githubService.getLocalNotesForAPI();
+        console.log(`📝 Error fallback to ${localNotes.length} local notes`);
+        return Array.isArray(localNotes) ? localNotes : [];
+    }
+}
 // Serve frontend
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
