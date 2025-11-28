@@ -20,7 +20,7 @@ A personal markdown notes management system with GitHub integration for secure s
 - **Frontend**: HTML5, CSS3, JavaScript (ES6+)
 - **Storage**: GitHub Repository integration with local fallback
 - **Authentication**: Client-side session management
-- **Styling**: Custom CSS with CSS variables for theming
+- **Styling**: Custom CSS with CSS variables for theming 
 - **Icons**: Unicode emojis for cross-platform compatibility
 
 ## Project Structure
